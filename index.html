@@ -107,7 +107,7 @@
                 </div>
             </div>
 
-            <!-- Weekly Average Summary Card (Fonctionnalité 3) -->
+            <!-- Weekly Average Summary Card -->
             <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-5 rounded-xl shadow-sm border border-blue-200 flex flex-col md:flex-row justify-between items-center gap-4">
                 <div>
                     <h3 class="font-bold text-blue-900 text-sm"><i class="fa-solid fa-chart-line mr-2"></i>Résumé des 7 derniers jours</h3>
@@ -191,7 +191,6 @@
             <div class="bg-white rounded-xl shadow-sm border p-5 md:p-6 space-y-4">
                 <div class="flex justify-between items-center">
                     <h3 class="font-bold text-slate-800">Today's Meal Summary</h3>
-                    <!-- Bouton Dupliquer hier (Fonctionnalité 2) -->
                     <button onclick="copyYesterdayMeals()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-lg border transition flex items-center space-x-1.5">
                         <i class="fa-solid fa-copy text-blue-600"></i>
                         <span>Répéter les repas d'hier</span>
@@ -203,7 +202,6 @@
 
         <!-- FOOD LOG VIEW -->
         <section id="view-food" class="space-y-6 hidden">
-            <!-- Section Favoris / Aliments fréquents (Fonctionnalité 1) -->
             <div class="bg-white p-4 rounded-xl shadow-sm border space-y-2">
                 <h4 class="font-bold text-xs text-slate-500 uppercase tracking-wide flex items-center">
                     <i class="fa-solid fa-star text-amber-400 mr-1.5"></i> Favoris & Aliments Fréquents (Ajout en 1 clic)
@@ -535,7 +533,7 @@
             currentUser: "u1",
             logs: {},
             recipes: [],
-            favorites: [] // Stockage des favoris (Fonctionnalité 1)
+            favorites: []
         };
 
         let html5QrCode = null;
@@ -551,13 +549,28 @@
             initChart();
         });
 
+        // Double sécurité : Synchronisation Cloud + Sauvegarde Locale (LocalStorage)
         function initCloudSync() {
+            // Charger d'abord la sauvegarde locale de secours si elle existe
+            const localBackup = localStorage.getItem('familyFit_local_backup');
+            if (localBackup) {
+                try {
+                    appData = JSON.parse(localBackup);
+                } catch (e) {
+                    console.error("Erreur de lecture du backup local", e);
+                }
+            }
+
             db.collection('family_data').doc('main_store')
               .onSnapshot((doc) => {
                   if (doc.exists) {
-                      appData = doc.data();
-                      appData.users.forEach(u => { if (!u.units) u.units = 'metric'; });
-                      if (!appData.favorites) appData.favorites = [];
+                      const cloudData = doc.data();
+                      // Fusionner ou prioriser pour ne pas perdre les données locales récentes
+                      if (cloudData && cloudData.users) {
+                          appData = cloudData;
+                          appData.users.forEach(u => { if (!u.units) u.units = 'metric'; });
+                          if (!appData.favorites) appData.favorites = [];
+                      }
                       populateUserDropdown();
                       renderDashboard();
                       renderFavorites();
@@ -568,6 +581,9 @@
         }
 
         function saveToCloud() {
+            // Sauvegarde immédiate dans le navigateur pour éviter toute perte en cas de coupure ou rafraîchissement
+            localStorage.setItem('familyFit_local_backup', JSON.stringify(appData));
+
             db.collection('family_data').doc('main_store').set(appData)
               .catch(err => console.error("Cloud save error:", err));
         }
@@ -620,7 +636,6 @@
             if (tabId !== 'scanner') stopScanner();
         }
 
-        // Dashboard avec soustraction automatique du sport des calories nettes
         function renderDashboard() {
             const user = getCurrentUserObj();
             const log = getTodayLog();
@@ -637,7 +652,6 @@
             let burnedCals = 0;
             log.exercises.forEach(e => { burnedCals += Number(e.calories); });
 
-            // Formule : Budget Net = Objectif de base - Consommé + Sport brûlé (ou Objectif + Sport - Consommé)
             const netRemaining = targetCals - consumedCals + burnedCals;
 
             document.getElementById('dash-budget').innerText = targetCals.toLocaleString();
@@ -645,21 +659,47 @@
             document.getElementById('dash-burned').innerText = burnedCals.toLocaleString();
             document.getElementById('dash-net').innerText = netRemaining.toLocaleString();
 
-            // Calcul du résumé hebdomadaire (Fonctionnalité 3)
             calculateWeeklyAverages();
 
             const targetCarbs = Math.round((targetCals * 0.4) / 4);
             const targetProtein = Math.round((targetCals * 0.3) / 4);
             const targetFat = Math.round((targetCals * 0.3) / 9);
 
-            document.getElementById('macro-carbs-text').innerText = `${Math.round(carbsG)} / ${targetCarbs} g`;
-            document.getElementById('macro-carbs-bar').style.width = `${Math.min(100, (carbsG / targetCarbs) * 100)}%`;
+            const carbsPercent = targetCarbs > 0 ? Math.round((carbsG / targetCarbs) * 100) : 0;
+            const carbsOver = carbsG > targetCarbs ? ` (${carbsPercent}% • +${Math.round(carbsG - targetCarbs)}g over)` : ` (${carbsPercent}%)`;
+            document.getElementById('macro-carbs-text').innerText = `${Math.round(carbsG)} / ${targetCarbs} g${carbsOver}`;
+            document.getElementById('macro-carbs-bar').style.width = `${Math.min(100, carbsPercent)}%`;
+            if (carbsG > targetCarbs) {
+                document.getElementById('macro-carbs-bar').classList.remove('bg-blue-500');
+                document.getElementById('macro-carbs-bar').classList.add('bg-red-500');
+            } else {
+                document.getElementById('macro-carbs-bar').classList.remove('bg-red-500');
+                document.getElementById('macro-carbs-bar').classList.add('bg-blue-500');
+            }
 
-            document.getElementById('macro-protein-text').innerText = `${Math.round(proteinG)} / ${targetProtein} g`;
-            document.getElementById('macro-protein-bar').style.width = `${Math.min(100, (proteinG / targetProtein) * 100)}%`;
+            const proteinPercent = targetProtein > 0 ? Math.round((proteinG / targetProtein) * 100) : 0;
+            const proteinOver = proteinG > targetProtein ? ` (${proteinPercent}% • +${Math.round(proteinG - targetProtein)}g over)` : ` (${proteinPercent}%)`;
+            document.getElementById('macro-protein-text').innerText = `${Math.round(proteinG)} / ${targetProtein} g${proteinOver}`;
+            document.getElementById('macro-protein-bar').style.width = `${Math.min(100, proteinPercent)}%`;
+            if (proteinG > targetProtein) {
+                document.getElementById('macro-protein-bar').classList.remove('bg-emerald-500');
+                document.getElementById('macro-protein-bar').classList.add('bg-red-500');
+            } else {
+                document.getElementById('macro-protein-bar').classList.remove('bg-red-500');
+                document.getElementById('macro-protein-bar').classList.add('bg-emerald-500');
+            }
 
-            document.getElementById('macro-fat-text').innerText = `${Math.round(fatG)} / ${targetFat} g`;
-            document.getElementById('macro-fat-bar').style.width = `${Math.min(100, (fatG / targetFat) * 100)}%`;
+            const fatPercent = targetFat > 0 ? Math.round((fatG / targetFat) * 100) : 0;
+            const fatOver = fatG > targetFat ? ` (${fatPercent}% • +${Math.round(fatG - targetFat)}g over)` : ` (${fatPercent}%)`;
+            document.getElementById('macro-fat-text').innerText = `${Math.round(fatG)} / ${targetFat} g${fatOver}`;
+            document.getElementById('macro-fat-bar').style.width = `${Math.min(100, fatPercent)}%`;
+            if (fatG > targetFat) {
+                document.getElementById('macro-fat-bar').classList.remove('bg-amber-500');
+                document.getElementById('macro-fat-bar').classList.add('bg-red-500');
+            } else {
+                document.getElementById('macro-fat-bar').classList.remove('bg-red-500');
+                document.getElementById('macro-fat-bar').classList.add('bg-amber-500');
+            }
 
             const waterTarget = 2500;
             document.getElementById('water-amount').innerText = log.water.toLocaleString();
@@ -700,7 +740,6 @@
             });
         }
 
-        // Calcul des moyennes des 7 derniers jours (Fonctionnalité 3)
         function calculateWeeklyAverages() {
             let totalCalsWeek = 0;
             let totalBurnedWeek = 0;
@@ -728,7 +767,6 @@
             document.getElementById('weekly-avg-burned').innerText = `${avgBurned} kcal`;
         }
 
-        // Répéter les repas d'hier (Fonctionnalité 2)
         function copyYesterdayMeals() {
             let d = new Date();
             d.setDate(d.getDate() - 1);
@@ -741,7 +779,6 @@
             }
 
             const todayLog = getTodayLog();
-            // Copier les aliments d'hier dans la journée d'aujourd'hui
             const copiedFoods = JSON.parse(JSON.stringify(appData.logs[yesterdayKey].foods));
             todayLog.foods.push(...copiedFoods);
 
@@ -766,7 +803,7 @@
         }
 
         function switchUser() {
-            appData.currentUser = document.getElementById('userSelect'].value;
+            appData.currentUser = document.getElementById('userSelect').value;
             renderDashboard();
             renderFavorites();
         }
@@ -778,7 +815,6 @@
             renderDashboard();
         }
 
-        // Gestion des favoris (Fonctionnalité 1)
         function toggleFavorite(name, calories, serving, protein, carbs, fat) {
             if (!appData.favorites) appData.favorites = [];
             const existingIdx = appData.favorites.findIndex(f => f.name === name);
@@ -818,7 +854,6 @@
             alert(`"${name}" ajouté à votre journal (${mealType}) !`);
         }
 
-        // Recherche de nourriture
         function searchFood() {
             const query = document.getElementById('food-search').value.trim().toLowerCase();
             const resultsDiv = document.getElementById('food-search-results');
@@ -907,7 +942,6 @@
             document.getElementById('food-search').value = '';
         }
 
-        // Multi-Ingredient Recipe Builder Logic
         function addIngredientToRecipe() {
             const name = document.getElementById('ing-name').value.trim();
             const calories = Number(document.getElementById('ing-cals').value) || 0;
@@ -1151,101 +1185,6 @@
             appData.recipes.splice(idx, 1);
             saveToCloud();
             renderRecipesLibrary();
-        }
-
-        async function parseMealWithAI() {
-            const input = document.getElementById('ai-food-input').value.trim();
-            const statusDiv = document.getElementById('ai-status-msg');
-            if (!input) { alert('Please describe what you ate first!'); return; }
-
-            statusDiv.classList.remove('hidden');
-            statusDiv.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Gemini AI is analyzing meal...`;
-
-            try {
-                const searchUrl = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(input)}&search_simple=1&action=process&json=1&page_size=1`;
-                const res = await fetch(searchUrl);
-                const data = await res.json();
-                const products = data.products || [];
-
-                let name = input;
-                let calories = 350;
-                let serving = '1 serving';
-                let protein = 15;
-                let carbs = 40;
-                let fat = 12;
-
-                if (products.length > 0) {
-                    const p = products[0];
-                    name = p.product_name || input;
-                    const nutriments = p.nutriments || {};
-                    calories = Math.round(nutriments['energy-kcal_100g'] || nutriments['energy-kcal'] || 350);
-                    protein = Number((nutriments['proteins_100g'] || 15).toFixed(1));
-                    carbs = Number((nutriments['carbohydrates_100g'] || 40).toFixed(1));
-                    fat = Number((nutriments['fat_100g'] || 12).toFixed(1));
-                }
-
-                const log = getTodayLog();
-                log.foods.push({ mealType: 'Snacks', name: `AI Text: ${name}`, calories, serving, protein, carbs, fat });
-
-                saveToCloud();
-                renderFoodLog();
-                document.getElementById('ai-food-input').value = '';
-                statusDiv.innerHTML = `<i class="fa-solid fa-check text-emerald-600 mr-1"></i> Logged "${name}" (${calories} kcal)!`;
-                setTimeout(() => statusDiv.classList.add('hidden'), 4000);
-            } catch (err) {
-                statusDiv.innerHTML = `<span class="text-red-600">Error parsing meal. Use manual entry.</span>`;
-            }
-        }
-
-        async function parseVisionRecipeAndLunch() {
-            const fileInput = document.getElementById('ai-vision-file');
-            const promptInput = document.getElementById('ai-vision-prompt');
-            const statusDiv = document.getElementById('ai-vision-status');
-
-            if (!fileInput.files[0]) {
-                alert('Please upload or select a picture first!');
-                return;
-            }
-
-            const file = fileInput.files[0];
-            const userPrompt = promptInput.value.trim() || "Create recipe and add to lunch";
-
-            statusDiv.classList.remove('hidden');
-            statusDiv.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Gemini Vision analyzing image & request...`;
-
-            setTimeout(() => {
-                const recipeTitle = file.name.substring(0, file.name.lastIndexOf('.')) || 'AI Vision Recipe';
-                
-                if (!appData.recipes) appData.recipes = [];
-                appData.recipes.push({
-                    title: `AI: ${recipeTitle}`,
-                    servings: 1,
-                    calories: 480,
-                    protein: '28.0',
-                    carbs: '42.0',
-                    fat: '16.0'
-                });
-
-                const log = getTodayLog();
-                log.foods.push({
-                    mealType: 'Lunch',
-                    name: `AI Recipe: ${recipeTitle}`,
-                    calories: 480,
-                    serving: '1 serving',
-                    protein: 28,
-                    carbs: 42,
-                    fat: 16
-                });
-
-                saveToCloud();
-                renderFoodLog();
-                renderRecipesLibrary();
-
-                fileInput.value = '';
-                promptInput.value = '';
-                statusDiv.innerHTML = `<i class="fa-solid fa-check text-emerald-600 mr-1"></i> Recipe created & added to Lunch (480 kcal)!`;
-                setTimeout(() => statusDiv.classList.add('hidden'), 5000);
-            }, 2200);
         }
 
         function logFoodItem() {
@@ -1554,7 +1493,7 @@
             const user = getCurrentUserObj();
             user.name = document.getElementById('prof-name').value;
             user.units = document.getElementById('prof-units').value;
-            user.gender = document.getElementById('prof-gender-input' || 'prof-gender').value;
+            user.gender = document.getElementById('prof-gender').value;
             user.age = Number(document.getElementById('prof-age').value);
             user.height = Number(document.getElementById('prof-height').value);
             user.weight = Number(document.getElementById('prof-weight').value);
