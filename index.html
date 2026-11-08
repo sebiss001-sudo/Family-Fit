@@ -17,11 +17,11 @@
     <style>
         .active-tab { border-bottom: 2px solid #3b82f6; color: #3b82f6; font-weight: 600; }
         .mob-active-tab { color: #3b82f6 !important; font-weight: 700; }
-        #reader { width: 100% !important; min-height: 250px; background: #0f172a; border-radius: 0.5rem; }
+        #reader { width: 100% !important; min-height: 220px; background: #0f172a; border-radius: 0.5rem; }
         #reader video { width: 100% !important; height: 100% !important; object-fit: cover; border-radius: 0.5rem; }
         #html5-qrcode-button-camera-permission, #html5-qrcode-button-camera-start, #html5-qrcode-button-camera-stop {
             background-color: #2563eb !important; color: white !important; font-weight: 600 !important;
-            padding: 0.5rem 1rem !important; border-radius: 0.5rem !important; border: none !important; cursor: pointer !important; margin: 4px !important;
+            padding: 0.4rem 0.8rem !important; border-radius: 0.5rem !important; border: none !important; cursor: pointer !important; margin: 4px !important; font-size: 12px !important;
         }
     </style>
 </head>
@@ -68,7 +68,7 @@
         <nav class="max-w-6xl mx-auto px-4 hidden md:flex space-x-8 text-sm text-slate-500 border-t border-slate-100 overflow-x-auto">
             <button onclick="switchTab('dashboard')" id="tab-dashboard" class="py-3 px-1 active-tab flex items-center space-x-2"><i class="fa-solid fa-chart-pie"></i><span>Dashboard</span></button>
             <button onclick="switchTab('food')" id="tab-food" class="py-3 px-1 flex items-center space-x-2"><i class="fa-solid fa-utensils"></i><span>Food Log</span></button>
-            <button onclick="switchTab('recipes')" id="tab-recipes" class="py-3 px-1 flex items-center space-x-2"><i class="fa-solid fa-book-open"></i><span>Recipes & Custom Food</span></button>
+            <button onclick="switchTab('recipes')" id="tab-recipes" class="py-3 px-1 flex items-center space-x-2"><i class="fa-solid fa-book-open"></i><span>Recipe Builder</span></button>
             <button onclick="switchTab('scanner')" id="tab-scanner" class="py-3 px-1 flex items-center space-x-2"><i class="fa-solid fa-barcode"></i><span>Scanner</span></button>
             <button onclick="switchTab('exercise')" id="tab-exercise" class="py-3 px-1 flex items-center space-x-2"><i class="fa-solid fa-person-running"></i><span>Exercise</span></button>
             <button onclick="switchTab('progress')" id="tab-progress" class="py-3 px-1 flex items-center space-x-2"><i class="fa-solid fa-chart-line"></i><span>Progress</span></button>
@@ -274,46 +274,57 @@
             </div>
         </section>
 
-        <!-- RECIPE & CUSTOM FOOD BUILDER VIEW -->
+        <!-- RECIPE & INGREDIENT BUILDER VIEW -->
         <section id="view-recipes" class="space-y-6 hidden">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Custom Food / Recipe Creator with direct macro inputs -->
+                <!-- Recipe Builder Form with Multi-Ingredients & Barcode / Search -->
                 <div class="bg-white p-5 md:p-6 rounded-xl shadow-sm border space-y-4">
-                    <h3 class="font-bold text-slate-800 border-b pb-2">Create Custom Food / Recipe</h3>
-                    <p class="text-xs text-slate-500">Add custom meals like lasagna where you already know the macros and calories!</p>
+                    <h3 class="font-bold text-slate-800 border-b pb-2">Create Recipe (Multiple Ingredients)</h3>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Name (e.g. Lasagna)</label>
-                        <input type="text" id="recipe-title" placeholder="Lasagna Slice" class="w-full border rounded-lg px-3 py-2 text-sm">
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Recipe Name</label>
+                        <input type="text" id="recipe-title" placeholder="Homemade Lasagna" class="w-full border rounded-lg px-3 py-2 text-sm">
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1">Servings</label>
-                            <input type="number" id="recipe-servings" value="1" min="1" class="w-full border rounded-lg px-3 py-2 text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1">Calories (kcal)</label>
-                            <input type="number" id="recipe-calories-input" placeholder="450" class="w-full border rounded-lg px-3 py-2 text-sm">
-                        </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Number of Servings</label>
+                        <input type="number" id="recipe-servings" value="4" min="1" onchange="calculateRecipeTotals()" class="w-full border rounded-lg px-3 py-2 text-sm">
                     </div>
-                    <div class="grid grid-cols-3 gap-2">
-                        <div>
-                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">Protein (g)</label>
-                            <input type="number" step="0.1" id="recipe-protein-input" placeholder="25" class="w-full border rounded-lg px-2 py-1.5 text-sm">
+
+                    <!-- Add Ingredient Section -->
+                    <div class="border-t pt-3 space-y-2">
+                        <label class="block text-xs font-semibold text-blue-700 uppercase">Add Ingredients</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="ing-name" placeholder="Ingredient name (e.g. Ground Beef)" class="flex-1 border rounded-lg px-2.5 py-1.5 text-xs">
+                            <button onclick="openRecipeScanner()" class="bg-slate-800 hover:bg-slate-900 text-white px-2.5 py-1.5 rounded-lg text-xs" title="Scan Barcode"><i class="fa-solid fa-barcode"></i></button>
                         </div>
-                        <div>
-                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">Carbs (g)</label>
-                            <input type="number" step="0.1" id="recipe-carbs-input" placeholder="40" class="w-full border rounded-lg px-2 py-1.5 text-sm">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="number" id="ing-cals" placeholder="Calories (kcal)" class="border rounded-lg px-2.5 py-1.5 text-xs">
+                            <input type="text" id="ing-serving" placeholder="Amount (e.g. 200g)" class="border rounded-lg px-2.5 py-1.5 text-xs">
                         </div>
-                        <div>
-                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">Fat (g)</label>
-                            <input type="number" step="0.1" id="recipe-fat-input" placeholder="18" class="w-full border rounded-lg px-2 py-1.5 text-sm">
+                        <div class="grid grid-cols-3 gap-2">
+                            <input type="number" step="0.1" id="ing-protein" placeholder="Prot (g)" class="border rounded-lg px-2 py-1 text-xs">
+                            <input type="number" step="0.1" id="ing-carbs" placeholder="Carbs (g)" class="border rounded-lg px-2 py-1 text-xs">
+                            <input type="number" step="0.1" id="ing-fat" placeholder="Fat (g)" class="border rounded-lg px-2 py-1 text-xs">
                         </div>
+                        <button onclick="addIngredientToRecipe()" class="w-full bg-slate-700 hover:bg-slate-800 text-white font-semibold py-1.5 rounded-lg text-xs">+ Add Ingredient</button>
                     </div>
-                    <button onclick="saveCustomRecipeOrFood()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-lg text-sm">Save to Library</button>
+
+                    <!-- Ingredients List container -->
+                    <div id="recipe-ingredients-container" class="space-y-1 bg-slate-50 p-2.5 rounded-lg border max-h-40 overflow-y-auto text-xs">
+                        <span class="text-slate-400">No ingredients added yet.</span>
+                    </div>
+
+                    <!-- Live Calculated Totals -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-slate-700 space-y-1">
+                        <div class="font-bold text-blue-800">Nutrition Per Serving:</div>
+                        <div class="flex justify-between"><span>Calories:</span> <strong id="rec-calc-cals">0 kcal</strong></div>
+                        <div class="flex justify-between"><span>Macros (P / C / F):</span> <strong id="rec-calc-macros">0g / 0g / 0g</strong></div>
+                    </div>
+
+                    <button onclick="saveMultiIngredientRecipe()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-lg text-sm">Save Recipe to Library</button>
                 </div>
 
                 <div class="md:col-span-2 bg-white p-5 md:p-6 rounded-xl shadow-sm border space-y-4">
-                    <h3 class="font-bold text-slate-800 border-b pb-2">Family Recipe & Custom Food Library</h3>
+                    <h3 class="font-bold text-slate-800 border-b pb-2">Family Recipe Library</h3>
                     <div id="recipes-library-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
                 </div>
             </div>
@@ -469,13 +480,13 @@
     <div id="edit-recipe-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="bg-white rounded-xl shadow-xl border max-w-md w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="font-bold text-slate-800 text-lg">Edit Recipe / Custom Food</h3>
+                <h3 class="font-bold text-slate-800 text-lg">Edit Recipe & Macros</h3>
                 <button onclick="closeEditRecipeModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <input type="hidden" id="edit-recipe-idx">
             <div class="space-y-3">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Name</label>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Recipe Name</label>
                     <input type="text" id="edit-recipe-title" class="w-full border rounded-lg px-3 py-2 text-sm">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
@@ -484,7 +495,7 @@
                         <input type="number" id="edit-recipe-servings" min="1" class="w-full border rounded-lg px-3 py-2 text-sm">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Calories (kcal)</label>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Calories (per serv)</label>
                         <input type="number" id="edit-recipe-calories" class="w-full border rounded-lg px-3 py-2 text-sm">
                     </div>
                 </div>
@@ -510,6 +521,18 @@
         </div>
     </div>
 
+    <!-- RECIPE SCANNER MODAL (For Scanning Recipe Ingredients via Barcode) -->
+    <div id="recipe-scanner-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-xl shadow-xl border max-w-md w-full p-6 space-y-4 text-center">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-slate-800">Scan Ingredient Barcode</h3>
+                <button onclick="closeRecipeScanner()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div id="recipe-reader"></div>
+            <button onclick="closeRecipeScanner()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold px-4 py-2 rounded-lg text-xs">Close Scanner</button>
+        </div>
+    </div>
+
     <script>
         let appData = {
             users: [
@@ -522,10 +545,14 @@
         };
 
         let html5QrCode = null;
+        let recipeHtml5QrCode = null;
         let pendingScannedItem = null;
         let chartInstance = null;
         let previousUnitSystem = 'metric';
         let searchTimer = null;
+
+        // Current recipe ingredients buffer in builder
+        let currentRecipeIngredients = [];
 
         window.addEventListener('DOMContentLoaded', () => {
             initCloudSync();
@@ -692,7 +719,7 @@
             renderDashboard();
         }
 
-        // Search Food function: Searches both user custom recipes/foods and Open Food Facts API with two clear categories
+        // Search Food function
         function searchFood() {
             const query = document.getElementById('food-search').value.trim().toLowerCase();
             const resultsDiv = document.getElementById('food-search-results');
@@ -717,7 +744,6 @@
 
                         let htmlContent = '';
 
-                        // My Custom Recipes & Foods Section
                         if (matchingRecipes.length > 0) {
                             htmlContent += `<div class="bg-blue-50 px-3 py-1 text-[11px] font-bold text-blue-800 uppercase tracking-wide">My Custom Recipes & Foods</div>`;
                             matchingRecipes.forEach(r => {
@@ -727,14 +753,13 @@
                                          onclick="selectLiveFood('${safeName}', ${r.calories}, '${r.servings || 1} serving(s)', ${r.protein || 0}, ${r.carbs || 0}, ${r.fat || 0})">
                                         <div>
                                             <span class="font-bold text-blue-700"><i class="fa-solid fa-utensils mr-1"></i>${r.title}</span> 
-                                            <span class="text-slate-400 text-[10px]">(Custom)</span>
+                                            <span class="text-slate-400 text-[10px]">(Recipe)</span>
                                         </div>
                                         <span class="text-blue-600 font-bold">${r.calories} kcal/serv</span>
                                     </div>`;
                             });
                         }
 
-                        // Online Database Section
                         htmlContent += `<div class="bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-600 uppercase tracking-wide">Online Food Database</div>`;
                         if (products.length > 0) {
                             products.forEach(p => {
@@ -783,6 +808,254 @@
             document.getElementById('food-search').value = '';
         }
 
+        // Multi-Ingredient Recipe Builder Logic
+        function addIngredientToRecipe() {
+            const name = document.getElementById('ing-name').value.trim();
+            const calories = Number(document.getElementById('ing-cals').value) || 0;
+            const serving = document.getElementById('ing-serving').value.trim() || '100g';
+            const protein = Number(document.getElementById('ing-protein').value) || 0;
+            const carbs = Number(document.getElementById('ing-carbs').value) || 0;
+            const fat = Number(document.getElementById('ing-fat').value) || 0;
+
+            if (!name) { alert('Please enter an ingredient name'); return; }
+
+            currentRecipeIngredients.push({ name, calories, serving, protein, carbs, fat });
+
+            // Clear inputs
+            document.getElementById('ing-name').value = '';
+            document.getElementById('ing-cals').value = '';
+            document.getElementById('ing-serving').value = '';
+            document.getElementById('ing-protein').value = '';
+            document.getElementById('ing-carbs').value = '';
+            document.getElementById('ing-fat').value = '';
+
+            renderRecipeIngredientsBuilder();
+            calculateRecipeTotals();
+        }
+
+        function removeIngredientFromRecipe(idx) {
+            currentRecipeIngredients.splice(idx, 1);
+            renderRecipeIngredientsBuilder();
+            calculateRecipeTotals();
+        }
+
+        function renderRecipeIngredientsBuilder() {
+            const container = document.getElementById('recipe-ingredients-container');
+            if (currentRecipeIngredients.length === 0) {
+                container.innerHTML = `<span class="text-slate-400">No ingredients added yet.</span>`;
+                return;
+            }
+            container.innerHTML = '';
+            currentRecipeIngredients.forEach((ing, idx) => {
+                container.innerHTML += `
+                    <div class="flex justify-between items-center bg-white p-1.5 border rounded mb-1">
+                        <div>
+                            <span class="font-semibold text-slate-800">${ing.name}</span> <span class="text-[10px] text-slate-400">(${ing.serving})</span>
+                            <div class="text-[10px] text-slate-500">${ing.calories} kcal | P:${ing.protein}g C:${ing.carbs}g F:${ing.fat}g</div>
+                        </div>
+                        <button onclick="removeIngredientFromRecipe(${idx})" class="text-red-400 hover:text-red-600 px-1"><i class="fa-solid fa-xmark"></i></button>
+                    </div>`;
+            });
+        }
+
+        function calculateRecipeTotals() {
+            const servings = Math.max(1, Number(document.getElementById('recipe-servings').value) || 1);
+            let totalCals = 0, totalP = 0, totalC = 0, totalF = 0;
+
+            currentRecipeIngredients.forEach(ing => {
+                totalCals += Number(ing.calories);
+                totalP += Number(ing.protein);
+                totalC += Number(ing.carbs);
+                totalF += Number(ing.fat);
+            });
+
+            const perServCals = Math.round(totalCals / servings);
+            const perServP = (totalP / servings).toFixed(1);
+            const perServC = (totalC / servings).toFixed(1);
+            const perServF = (totalF / servings).toFixed(1);
+
+            document.getElementById('rec-calc-cals').innerText = `${perServCals} kcal`;
+            document.getElementById('rec-calc-macros').innerText = `${perServP}g / ${perServC}g / ${perServF}g`;
+        }
+
+        function saveMultiIngredientRecipe() {
+            const title = document.getElementById('recipe-title').value.trim();
+            const servings = Number(document.getElementById('recipe-servings').value) || 1;
+
+            if (!title) { alert('Please enter a recipe name'); return; }
+            if (currentRecipeIngredients.length === 0) { alert('Please add at least one ingredient'); return; }
+
+            let totalCals = 0, totalP = 0, totalC = 0, totalF = 0;
+            currentRecipeIngredients.forEach(ing => {
+                totalCals += Number(ing.calories);
+                totalP += Number(ing.protein);
+                totalC += Number(ing.carbs);
+                totalF += Number(ing.fat);
+            });
+
+            const calories = Math.round(totalCals / servings);
+            const protein = (totalP / servings).toFixed(1);
+            const carbs = (totalC / servings).toFixed(1);
+            const fat = (totalF / servings).toFixed(1);
+
+            if (!appData.recipes) appData.recipes = [];
+            appData.recipes.push({
+                title,
+                servings,
+                calories,
+                protein,
+                carbs,
+                fat,
+                ingredients: [...currentRecipeIngredients]
+            });
+
+            saveToCloud();
+            document.getElementById('recipe-title').value = '';
+            currentRecipeIngredients = [];
+            renderRecipeIngredientsBuilder();
+            calculateRecipeTotals();
+            renderRecipesLibrary();
+            alert('Recipe saved successfully!');
+        }
+
+        // Open Barcode Scanner specifically for Recipe Ingredients
+        function openRecipeScanner() {
+            document.getElementById('recipe-scanner-modal').classList.remove('hidden');
+            if (!recipeHtml5QrCode) {
+                recipeHtml5QrCode = new Html5Qrcode("recipe-reader");
+            }
+            recipeHtml5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 5, qrbox: { width: 200, height: 200 }, aspectRatio: 1.0 },
+                (decodedText) => {
+                    closeRecipeScanner();
+                    lookupIngredientBarcode(decodedText);
+                },
+                (err) => {}
+            ).catch(err => alert("Camera permission error or not supported on HTTP"));
+        }
+
+        function closeRecipeScanner() {
+            if (recipeHtml5QrCode && recipeHtml5QrCode.isScanning) {
+                recipeHtml5QrCode.stop().catch(e => {});
+            }
+            document.getElementById('recipe-scanner-modal').classList.add('hidden');
+        }
+
+        function lookupIngredientBarcode(code) {
+            fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 1) {
+                        const p = data.product;
+                        const nut = p.nutriments || {};
+                        document.getElementById('ing-name').value = p.product_name || 'Scanned Ingredient';
+                        document.getElementById('ing-cals').value = Math.round(nut['energy-kcal_100g'] || nut['energy-kcal'] || 100);
+                        document.getElementById('ing-serving').value = p.serving_size || '100g';
+                        document.getElementById('ing-protein').value = (nut['proteins_100g'] || 0).toFixed(1);
+                        document.getElementById('ing-carbs').value = (nut['carbohydrates_100g'] || 0).toFixed(1);
+                        document.getElementById('ing-fat').value = (nut['fat_100g'] || 0).toFixed(1);
+                    } else {
+                        alert("Product not found in Open Food Facts database.");
+                    }
+                }).catch(err => alert("Error connecting to barcode database"));
+        }
+
+        function renderRecipesLibrary() {
+            const container = document.getElementById('recipes-library-list');
+            container.innerHTML = '';
+            if (!appData.recipes || appData.recipes.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400">No custom recipes created yet.</p>';
+                return;
+            }
+            appData.recipes.forEach((r, idx) => {
+                let ingListHtml = '';
+                if (r.ingredients && r.ingredients.length > 0) {
+                    ingListHtml = `<div class="text-[11px] text-slate-500 mt-1 italic">Ingredients: ${r.ingredients.map(i => i.name).join(', ')}</div>`;
+                }
+
+                container.innerHTML += `
+                    <div class="bg-slate-50 border p-4 rounded-xl space-y-2">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-bold text-slate-800">${r.title}</h4>
+                            <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">${r.calories} kcal / serv</span>
+                        </div>
+                        <div class="text-xs text-slate-500">Macros: P: ${r.protein || 0}g | C: ${r.carbs || 0}g | F: ${r.fat || 0}g</div>
+                        ${ingListHtml}
+                        <div class="pt-2 flex space-x-2">
+                            <button onclick="logRecipeToFood(${idx})" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">Log to Food</button>
+                            <button onclick="openEditRecipeModal(${idx})" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-lg"><i class="fa-solid fa-pen mr-1"></i> Edit</button>
+                            <button onclick="deleteRecipe(${idx})" class="text-red-400 hover:text-red-600 text-xs px-2 py-1.5"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function openEditRecipeModal(idx) {
+            const r = appData.recipes[idx];
+            document.getElementById('edit-recipe-idx').value = idx;
+            document.getElementById('edit-recipe-title').value = r.title || '';
+            document.getElementById('edit-recipe-servings').value = r.servings || 1;
+            document.getElementById('edit-recipe-calories').value = r.calories || 0;
+            document.getElementById('edit-recipe-protein').value = r.protein || 0;
+            document.getElementById('edit-recipe-carbs').value = r.carbs || 0;
+            document.getElementById('edit-recipe-fat').value = r.fat || 0;
+            document.getElementById('edit-recipe-modal').classList.remove('hidden');
+        }
+
+        function closeEditRecipeModal() {
+            document.getElementById('edit-recipe-modal').classList.add('hidden');
+        }
+
+        function saveEditedRecipe() {
+            const idx = Number(document.getElementById('edit-recipe-idx').value);
+            const title = document.getElementById('edit-recipe-title').value;
+            const servings = Number(document.getElementById('edit-recipe-servings').value) || 1;
+            const calories = Number(document.getElementById('edit-recipe-calories').value) || 0;
+            const protein = document.getElementById('edit-recipe-protein').value || '0';
+            const carbs = document.getElementById('edit-recipe-carbs').value || '0';
+            const fat = document.getElementById('edit-recipe-fat').value || '0';
+
+            if (!title) { alert('Please enter a name'); return; }
+
+            appData.recipes[idx] = {
+                ...appData.recipes[idx],
+                title,
+                servings,
+                calories,
+                protein,
+                carbs,
+                fat
+            };
+
+            saveToCloud();
+            closeEditRecipeModal();
+            renderRecipesLibrary();
+            alert('Recipe updated successfully!');
+        }
+
+        function logRecipeToFood(idx) {
+            const r = appData.recipes[idx];
+            const log = getTodayLog();
+            log.foods.push({
+                mealType: 'Lunch',
+                name: r.title,
+                calories: r.calories,
+                serving: `${r.servings || 1} serving(s)`,
+                protein: r.protein,
+                carbs: r.carbs,
+                fat: r.fat
+            });
+            saveToCloud();
+            switchTab('dashboard');
+        }
+
+        function deleteRecipe(idx) {
+            appData.recipes.splice(idx, 1);
+            saveToCloud();
+            renderRecipesLibrary();
+        }
+
         // Gemini AI Text Parser
         async function parseMealWithAI() {
             const input = document.getElementById('ai-food-input').value.trim();
@@ -828,7 +1101,6 @@
             }
         }
 
-        // Gemini Vision AI: Links picture + prompt instruction directly to lunch & recipe library
         async function parseVisionRecipeAndLunch() {
             const fileInput = document.getElementById('ai-vision-file');
             const promptInput = document.getElementById('ai-vision-prompt');
@@ -991,130 +1263,6 @@
             log.exercises.splice(idx, 1);
             saveToCloud();
             renderExerciseLog();
-        }
-
-        // Save Custom Food / Recipe directly with known macros
-        function saveCustomRecipeOrFood() {
-            const title = document.getElementById('recipe-title').value.trim();
-            const servings = Number(document.getElementById('recipe-servings').value) || 1;
-            const calories = Number(document.getElementById('recipe-calories-input').value) || 0;
-            const protein = document.getElementById('recipe-protein-input').value || '0';
-            const carbs = document.getElementById('recipe-carbs-input').value || '0';
-            const fat = document.getElementById('recipe-fat-input').value || '0';
-
-            if (!title) {
-                alert('Please enter a name for your custom food or recipe.');
-                return;
-            }
-
-            if (!appData.recipes) appData.recipes = [];
-            appData.recipes.push({
-                title,
-                servings,
-                calories,
-                protein,
-                carbs,
-                fat
-            });
-
-            saveToCloud();
-            document.getElementById('recipe-title').value = '';
-            document.getElementById('recipe-servings').value = '1';
-            document.getElementById('recipe-calories-input').value = '';
-            document.getElementById('recipe-protein-input').value = '';
-            document.getElementById('recipe-carbs-input').value = '';
-            document.getElementById('recipe-fat-input').value = '';
-            renderRecipesLibrary();
-            alert('Custom food/recipe saved successfully! It is now searchable in your food log.');
-        }
-
-        function renderRecipesLibrary() {
-            const container = document.getElementById('recipes-library-list');
-            container.innerHTML = '';
-            if (!appData.recipes || appData.recipes.length === 0) {
-                container.innerHTML = '<p class="text-xs text-slate-400">No custom recipes or foods created yet.</p>';
-                return;
-            }
-            appData.recipes.forEach((r, idx) => {
-                container.innerHTML += `
-                    <div class="bg-slate-50 border p-4 rounded-xl space-y-2">
-                        <div class="flex justify-between items-start">
-                            <h4 class="font-bold text-slate-800">${r.title}</h4>
-                            <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">${r.calories} kcal / serv</span>
-                        </div>
-                        <div class="text-xs text-slate-500">Macros: P: ${r.protein || 0}g | C: ${r.carbs || 0}g | F: ${r.fat || 0}g</div>
-                        <div class="pt-2 flex space-x-2">
-                            <button onclick="logRecipeToFood(${idx})" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">Log to Food</button>
-                            <button onclick="openEditRecipeModal(${idx})" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-lg"><i class="fa-solid fa-pen mr-1"></i> Edit</button>
-                            <button onclick="deleteRecipe(${idx})" class="text-red-400 hover:text-red-600 text-xs px-2 py-1.5"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </div>`;
-            });
-        }
-
-        function openEditRecipeModal(idx) {
-            const r = appData.recipes[idx];
-            document.getElementById('edit-recipe-idx').value = idx;
-            document.getElementById('edit-recipe-title').value = r.title || '';
-            document.getElementById('edit-recipe-servings').value = r.servings || 1;
-            document.getElementById('edit-recipe-calories').value = r.calories || 0;
-            document.getElementById('edit-recipe-protein').value = r.protein || 0;
-            document.getElementById('edit-recipe-carbs').value = r.carbs || 0;
-            document.getElementById('edit-recipe-fat').value = r.fat || 0;
-            document.getElementById('edit-recipe-modal').classList.remove('hidden');
-        }
-
-        function closeEditRecipeModal() {
-            document.getElementById('edit-recipe-modal').classList.add('hidden');
-        }
-
-        function saveEditedRecipe() {
-            const idx = Number(document.getElementById('edit-recipe-idx').value);
-            const title = document.getElementById('edit-recipe-title').value;
-            const servings = Number(document.getElementById('edit-recipe-servings').value) || 1;
-            const calories = Number(document.getElementById('edit-recipe-calories').value) || 0;
-            const protein = document.getElementById('edit-recipe-protein').value || '0';
-            const carbs = document.getElementById('edit-recipe-carbs').value || '0';
-            const fat = document.getElementById('edit-recipe-fat').value || '0';
-
-            if (!title) { alert('Please enter a name'); return; }
-
-            appData.recipes[idx] = {
-                ...appData.recipes[idx],
-                title,
-                servings,
-                calories,
-                protein,
-                carbs,
-                fat
-            };
-
-            saveToCloud();
-            closeEditRecipeModal();
-            renderRecipesLibrary();
-            alert('Recipe/Custom food updated successfully!');
-        }
-
-        function logRecipeToFood(idx) {
-            const r = appData.recipes[idx];
-            const log = getTodayLog();
-            log.foods.push({
-                mealType: 'Lunch',
-                name: r.title,
-                calories: r.calories,
-                serving: `${r.servings || 1} serving(s)`,
-                protein: r.protein,
-                carbs: r.carbs,
-                fat: r.fat
-            });
-            saveToCloud();
-            switchTab('dashboard');
-        }
-
-        function deleteRecipe(idx) {
-            appData.recipes.splice(idx, 1);
-            saveToCloud();
-            renderRecipesLibrary();
         }
 
         // Scanner functions connected to Open Food Facts API
