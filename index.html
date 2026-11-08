@@ -6,6 +6,9 @@
 <link rel="manifest" href="manifest.json">
 <title>FamilyFit - Family Nutrition Tracker</title>
 <link rel="stylesheet" href="tailwind.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="icons/icon-192.png">
 <meta name="theme-color" content="#3b82f6">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js" integrity="sha384-dug+JxfBvklEQdJ4AYuBBAIScUz0bVN73xpy273gcAwHjb3qI0fXmuYNaNfdyYJG" crossorigin="anonymous"></script>
@@ -15,17 +18,44 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js" crossorigin="anonymous"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js" crossorigin="anonymous"></script>
 <style>
-.card{background:#fff;border:1px solid #e2e8f0;border-radius:.75rem;padding:1.25rem;box-shadow:0 1px 2px #0000000d}
-.inp{width:100%;border:1px solid #cbd5e1;border-radius:.5rem;padding:.5rem .75rem;font-size:.875rem;background:#fff}
-.lbl{display:block;font-size:.75rem;font-weight:600;color:#64748b;margin-bottom:.25rem}
-.btn{width:100%;color:#fff;font-weight:600;padding:.6rem;border-radius:.5rem;font-size:.875rem}
-.sm{font-size:.75rem;font-weight:600;padding:.4rem .75rem;border-radius:.5rem}
-.h3{font-weight:700;color:#1e293b;border-bottom:1px solid #e2e8f0;padding-bottom:.5rem}
-.active-tab{border-bottom:2px solid #3b82f6;color:#3b82f6;font-weight:600}
-.mob-active-tab{color:#3b82f6!important;font-weight:700}
-.modal{position:fixed;inset:0;background:#0f172a66;z-index:60;display:flex;align-items:center;justify-content:center;padding:1rem}
+:root{--ink:#0f172a}
+body{font-family:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:var(--ink);
+  background:radial-gradient(900px 420px at 0% -5%,#dbeafe99,transparent),radial-gradient(800px 420px at 100% 0%,#d1fae599,transparent),#f8fafc;background-attachment:fixed}
+main>section{animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.card{background:#fff;border:1px solid #e8edf3;border-radius:1rem;padding:1.25rem;box-shadow:0 1px 2px #0f172a0a,0 10px 28px -14px #0f172a26}
+.inp{width:100%;border:1px solid #d5dde8;border-radius:.75rem;padding:.55rem .8rem;font-size:.875rem;background:#fff;outline:none;transition:border-color .15s,box-shadow .15s}
+.inp:focus{border-color:#3b82f6;box-shadow:0 0 0 4px #3b82f62e}
+.lbl{display:block;font-size:.75rem;font-weight:600;color:#64748b;margin-bottom:.3rem}
+.btn{width:100%;color:#fff;font-weight:600;padding:.65rem;border-radius:.75rem;font-size:.875rem;box-shadow:0 8px 16px -10px #0f172a80;transition:transform .12s,filter .15s}
+.btn:hover{filter:brightness(1.07);transform:translateY(-1px)}.btn:active{transform:none}
+.sm{font-size:.75rem;font-weight:600;padding:.45rem .8rem;border-radius:.65rem;transition:filter .15s,background .15s}
+.h3{font-weight:700;color:#1e293b;border-bottom:1px solid #eef2f7;padding-bottom:.6rem}
+.app-header{background:#ffffffd9;backdrop-filter:saturate(1.5) blur(12px);border-bottom:1px solid #e8edf3}
+.logo{display:inline-flex;width:2rem;height:2rem;align-items:center;justify-content:center;border-radius:.7rem;margin-right:.5rem;font-size:.95rem;color:#fff;
+  background:linear-gradient(135deg,#10b981,#3b82f6);box-shadow:0 6px 14px -6px #2563eb99}
+.active-tab,.active-tab:hover{background:#eff6ff;color:#2563eb;font-weight:600}
+.mob-nav{background:#ffffffee;backdrop-filter:blur(12px);border-radius:1.25rem 1.25rem 0 0;box-shadow:0 -8px 24px -12px #0f172a40;padding-bottom:max(.625rem,env(safe-area-inset-bottom))}
+.mob-active-tab{color:#2563eb!important;font-weight:700;background:#eff6ff;border-radius:.9rem}
+.hero{display:flex;align-items:center;gap:1.5rem;padding:1.5rem;border-radius:1.25rem;color:#fff;background:linear-gradient(135deg,#2563eb,#10b981);box-shadow:0 18px 36px -18px #2563ebb3}
+.ring-wrap{position:relative;width:9rem;height:9rem;flex:none}
+.ring{transform:rotate(-90deg);width:100%;height:100%}
+.ring circle{fill:none;stroke-width:10;stroke-linecap:round}
+.ring-bg{stroke:#ffffff40}.ring-fg{stroke:#fff;transition:stroke-dashoffset .6s ease,stroke .3s}
+.ring-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-text div{font-size:1.9rem;font-weight:800;line-height:1}.ring-text span{font-size:.7rem;opacity:.9;margin-top:.25rem}
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;flex:1}
+.hero-stats div{background:#ffffff26;border-radius:.9rem;padding:.75rem .5rem;text-align:center}
+.hero-stats span{display:block;font-size:.68rem;opacity:.9;text-transform:uppercase;letter-spacing:.05em}
+.hero-stats b{font-size:1.4rem;font-weight:800}
+@media(max-width:520px){.hero{flex-direction:column;gap:1rem}.hero-stats{width:100%}}
+.modal{position:fixed;inset:0;background:#0f172a73;backdrop-filter:blur(3px);z-index:60;display:flex;align-items:center;justify-content:center;padding:1rem}
 .modal.hidden{display:none}
-#reader,#recipe-reader{width:100%;min-height:220px;background:#0f172a;border-radius:.5rem}
+#reader,#recipe-reader{width:100%;min-height:220px;background:#0f172a;border-radius:.75rem}
+#toast{position:fixed;left:50%;bottom:5.5rem;transform:translate(-50%,16px);background:#0f172a;color:#fff;padding:.7rem 1.1rem;border-radius:.9rem;font-size:.85rem;
+  opacity:0;pointer-events:none;transition:.25s;z-index:200;max-width:90vw;box-shadow:0 12px 28px -10px #0f172a99}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+@media(min-width:768px){#toast{bottom:1.5rem}}
 </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen font-sans pb-24 md:pb-6">
@@ -33,7 +63,7 @@
 <!-- Sign-in gate -->
 <div id="auth" class="modal" style="z-index:100;background:#f8fafc">
   <div class="card text-center space-y-4 max-w-sm w-full">
-    <i class="fa-solid fa-heart-pulse text-emerald-500 text-4xl"></i>
+    <span class="logo" style="width:3.5rem;height:3.5rem;font-size:1.6rem;margin:0 auto;border-radius:1rem"><i class="fa-solid fa-heart-pulse"></i></span>
     <h1 class="font-bold text-xl">FamilyFit</h1>
     <p id="auth-msg" class="text-sm text-slate-500">Sign in with an allowed Google account to continue.</p>
     <button id="auth-in" onclick="signIn()" class="btn bg-blue-600"><i class="fa-brands fa-google mr-2"></i>Sign in with Google</button>
@@ -41,9 +71,9 @@
   </div>
 </div>
 
-<header class="bg-white shadow-sm border-b sticky top-0 z-50">
+<header class="app-header sticky top-0 z-50">
   <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
-    <span class="font-bold text-xl tracking-tight"><i class="fa-solid fa-heart-pulse text-emerald-500 mr-2"></i>FamilyFit <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full uppercase"><i class="fa-solid fa-cloud text-[10px] mr-1"></i>Live Sync</span></span>
+    <span class="font-bold text-xl tracking-tight"><span class="logo"><i class="fa-solid fa-heart-pulse"></i></span>FamilyFit <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full uppercase"><i class="fa-solid fa-cloud text-[10px] mr-1"></i>Live Sync</span></span>
     <div class="flex items-center space-x-2">
       <select id="userSelect" onchange="switchUser()" class="bg-slate-100 border border-slate-300 font-semibold py-1.5 px-3 rounded-lg text-sm"></select>
       <button onclick="createNewProfile()" class="text-slate-500 hover:text-emerald-600 p-1.5" title="Add family member"><i class="fa-solid fa-user-plus text-lg"></i></button>
@@ -51,18 +81,23 @@
       <button onclick="signOut()" class="text-slate-400 hover:text-red-500 p-1.5" title="Sign out"><i class="fa-solid fa-right-from-bracket"></i></button>
     </div>
   </div>
-  <nav id="desk-nav" class="max-w-6xl mx-auto px-4 hidden md:flex space-x-8 text-sm text-slate-500 border-t border-slate-100"></nav>
+  <nav id="desk-nav" class="max-w-6xl mx-auto px-4 hidden md:flex space-x-1 pb-2 text-sm text-slate-500"></nav>
 </header>
-<nav id="mob-nav" class="fixed bottom-0 left-0 right-0 bg-white border-t z-50 md:hidden flex justify-around py-2.5 text-slate-500 shadow-xl"></nav>
+<nav id="mob-nav" class="mob-nav fixed bottom-0 left-0 right-0 z-50 md:hidden flex justify-around py-2.5 text-slate-500"></nav>
 
 <main class="max-w-6xl mx-auto px-4 py-6">
 <!-- DASHBOARD -->
 <section id="view-dashboard" class="space-y-6">
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-    <div class="card text-center"><span class="text-xs font-semibold text-slate-400 uppercase">Daily Budget</span><div id="dash-budget" class="text-3xl font-extrabold mt-1">0</div><span class="text-xs text-slate-400">kcal target</span></div>
-    <div class="card text-center"><span class="text-xs font-semibold text-slate-400 uppercase">Consumed</span><div id="dash-consumed" class="text-3xl font-extrabold text-amber-500 mt-1">0</div><span class="text-xs text-slate-400">kcal eaten</span></div>
-    <div class="card text-center"><span class="text-xs font-semibold text-slate-400 uppercase">Sport Burned</span><div id="dash-burned" class="text-3xl font-extrabold text-emerald-500 mt-1">0</div><span class="text-xs text-slate-400">kcal burned</span></div>
-    <div class="card text-center"><span class="text-xs font-semibold text-slate-400 uppercase">Net Remaining</span><div id="dash-net" class="text-3xl font-extrabold text-blue-600 mt-1">0</div><span class="text-xs text-slate-400">net budget</span></div>
+  <div class="hero">
+    <div class="ring-wrap">
+      <svg viewBox="0 0 120 120" class="ring"><circle cx="60" cy="60" r="52" class="ring-bg"/><circle id="ring-fg" cx="60" cy="60" r="52" class="ring-fg" stroke-dasharray="326.7" stroke-dashoffset="326.7"/></svg>
+      <div class="ring-text"><div id="dash-net">0</div><span id="ring-label">kcal left</span></div>
+    </div>
+    <div class="hero-stats">
+      <div><span>Budget</span><b id="dash-budget">0</b></div>
+      <div><span>Eaten</span><b id="dash-consumed">0</b></div>
+      <div><span>Burned</span><b id="dash-burned">0</b></div>
+    </div>
   </div>
   <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 flex flex-col md:flex-row justify-between items-center gap-4">
     <div><h3 class="font-bold text-blue-900 text-sm"><i class="fa-solid fa-chart-line mr-2"></i>Last 7 Days Summary</h3><p class="text-xs text-slate-600">Daily average over days with food logged.</p></div>
@@ -222,6 +257,8 @@
 </section>
 </main>
 
+<div id="toast"></div>
+
 <!-- PROFILE MODAL -->
 <div id="profile-modal" class="modal hidden"><div class="card max-w-md w-full space-y-3 max-h-[90vh] overflow-y-auto">
   <div class="flex justify-between items-center border-b pb-2"><h3 class="font-bold text-lg">Manage Profile & Units</h3><button onclick="closeProfileModal()" class="text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button></div>
@@ -276,6 +313,10 @@ db.enablePersistence({ synchronizeTabs: true }).catch(e => console.debug('Offlin
 
 /* ---------- helpers ---------- */
 const $ = id => document.getElementById(id);
+window.alert = msg => {   // friendly pop-up message instead of the browser's alert box
+  const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.remove('show'), Math.min(8000, 2500 + String(msg).length * 45));
+};
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num = v => Math.max(0, Number(v) || 0);
 const r1 = n => Math.round(n * 10) / 10;
@@ -376,8 +417,8 @@ async function initProfiles() {
 /* ---------- navigation ---------- */
 const TABS = [['dashboard','chart-pie','Dashboard','Home'],['food','utensils','Food Log','Food'],['recipes','book-open','Recipes','Recipes'],
   ['scanner','barcode','Scanner','Scan'],['exercise','person-running','Exercise','Activity'],['progress','chart-line','Progress','Progress']];
-$('desk-nav').innerHTML = TABS.map(t => `<button onclick="switchTab('${t[0]}')" id="tab-${t[0]}" class="py-3 px-1 flex items-center space-x-2"><i class="fa-solid fa-${t[1]}"></i><span>${t[2]}</span></button>`).join('');
-$('mob-nav').innerHTML = TABS.map(t => `<button onclick="switchTab('${t[0]}')" id="mob-tab-${t[0]}" class="flex flex-col items-center space-y-1"><i class="fa-solid fa-${t[1]} text-lg"></i><span class="text-[10px] font-medium">${t[3]}</span></button>`).join('');
+$('desk-nav').innerHTML = TABS.map(t => `<button onclick="switchTab('${t[0]}')" id="tab-${t[0]}" class="py-2 px-3 rounded-xl flex items-center space-x-2 hover:bg-slate-100 transition"><i class="fa-solid fa-${t[1]}"></i><span>${t[2]}</span></button>`).join('');
+$('mob-nav').innerHTML = TABS.map(t => `<button onclick="switchTab('${t[0]}')" id="mob-tab-${t[0]}" class="flex flex-col items-center space-y-1 px-3 py-1 transition"><i class="fa-solid fa-${t[1]} text-lg"></i><span class="text-[10px] font-medium">${t[3]}</span></button>`).join('');
 
 function switchTab(t) {
   tab = t;
@@ -416,13 +457,18 @@ function macroBar(label, val, target, color) {
     <span>${Math.round(val)} / ${target} g (${pct}%${over ? ` • +${Math.round(val - target)}g over` : ''})</span></div>
     <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden"><div class="${over ? 'bg-red-500' : color} h-full" style="width:${Math.min(100, pct)}%"></div></div></div>`;
 }
+const MEAL_ICON = { Breakfast: 'fa-mug-hot text-amber-500', Lunch: 'fa-bowl-food text-emerald-500', Dinner: 'fa-moon text-indigo-500', Snacks: 'fa-cookie-bite text-rose-400' };
 function renderDashboard() {
   const u = user(), log = getLog(), target = targetCalories(u);
   const eaten = sum(log.foods, 'calories'), burned = sum(log.exercises, 'calories');
   $('dash-budget').innerText = target.toLocaleString();
   $('dash-consumed').innerText = Math.round(eaten).toLocaleString();
   $('dash-burned').innerText = Math.round(burned).toLocaleString();
-  $('dash-net').innerText = Math.round(target - eaten + burned).toLocaleString();
+  const net = Math.round(target - eaten + burned), budget = target + burned;
+  $('dash-net').innerText = Math.abs(net).toLocaleString();
+  $('ring-label').innerText = net < 0 ? 'kcal over' : 'kcal left';
+  $('ring-fg').style.strokeDashoffset = 326.7 * (1 - Math.min(1, budget > 0 ? eaten / budget : 0));
+  $('ring-fg').style.stroke = net < 0 ? '#fecaca' : '#fff';
   $('macros').innerHTML = macroBar('Carbohydrates', sum(log.foods, 'carbs'), Math.round(target * .4 / 4), 'bg-blue-500')
     + macroBar('Protein', sum(log.foods, 'protein'), Math.round(target * .3 / 4), 'bg-emerald-500')
     + macroBar('Fats', sum(log.foods, 'fat'), Math.round(target * .3 / 9), 'bg-amber-500');
@@ -446,7 +492,7 @@ function renderDashboard() {
       items += `<div class="flex justify-between items-center text-xs text-slate-600 pl-4 py-1 border-l-2 border-blue-200"><span>${esc(f.name)} <span class="text-slate-400">(${esc(f.serving || '1 serv')})</span></span>
         <div class="flex items-center space-x-3"><span class="font-semibold">${esc(f.calories)} kcal</span><button onclick="removeFood(${i})" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash text-[10px]"></i></button></div></div>`;
     });
-    return `<div class="py-3 space-y-2"><div class="flex justify-between text-sm font-bold"><span><i class="fa-solid fa-utensils text-blue-500 mr-2 text-xs"></i>${type}</span><span class="text-blue-600">${Math.round(cals)} kcal</span></div>
+    return `<div class="py-3 space-y-2"><div class="flex justify-between text-sm font-bold"><span><i class="fa-solid ${MEAL_ICON[type]} mr-2 text-xs"></i>${type}</span><span class="text-blue-600">${Math.round(cals)} kcal</span></div>
       ${items || '<div class="text-[11px] text-slate-400 pl-4">No items logged</div>'}</div>`;
   }).join('');
 }
@@ -515,14 +561,31 @@ function fillProduct(k, p) {
   if (p.missing) alert('This product has no nutrition data in the database (it would show 0 kcal). Please enter the values yourself.');
 }
 function normProduct(p) {
+  const br = Array.isArray(p.brands) ? p.brands.join(', ') : p.brands;
   const n = p.nutriments || {};
   let cal = n['energy-kcal_100g'] ?? n['energy-kcal'];
   if (cal == null && n.energy_100g) cal = n.energy_100g / 4.184;   // kJ fallback
-  return { name: [p.product_name || 'Unknown product', p.brands ? `(${p.brands})` : ''].join(' ').trim(), missing: cal == null, cal: Math.round(cal || 0),
+  return { name: [p.product_name || 'Unknown product', br ? `(${br})` : ''].join(' ').trim(), missing: cal == null, cal: Math.round(cal || 0),
     p: Number(n.proteins_100g) || 0, c: Number(n.carbohydrates_100g) || 0, f: Number(n.fat_100g) || 0, serving: p.serving_size || '' };
 }
 const lookup = code => fetch(`https://world.openfoodfacts.org/api/v0/product/${encodeURIComponent(code)}.json`).then(r => r.json()).then(d => d.status === 1 ? normProduct(d.product) : null);
 
+/* ---------- online food search (fast endpoint first, classic one as fallback, with timeouts) ---------- */
+async function fetchJson(url, ms) {
+  const ac = new AbortController(), t = setTimeout(() => ac.abort(), ms);
+  try { const r = await fetch(url, { signal: ac.signal }); if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json(); }
+  finally { clearTimeout(t); }
+}
+const OFF_FIELDS = 'code,product_name,brands,nutriments,serving_size';
+async function offSearch(q) {
+  const e = encodeURIComponent(q), named = x => x && x.product_name;
+  try {
+    const d = await fetchJson(`https://search.openfoodfacts.org/search?q=${e}&page_size=10&fields=${OFF_FIELDS}`, 6000);
+    const hits = (d.hits || []).filter(named); if (hits.length) return hits.map(normProduct);
+  } catch (err) { console.debug('Fast search failed:', err); }
+  const d = await fetchJson(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${e}&search_simple=1&action=process&json=1&page_size=10&fields=${OFF_FIELDS}`, 12000);
+  return (d.products || []).filter(named).map(normProduct);
+}
 /* ---------- search ---------- */
 function searchFood() {
   const q = $('food-search').value.trim().toLowerCase(), box = $('food-search-results');
@@ -536,17 +599,15 @@ function searchFood() {
     if (recipes.length) h += '<div class="bg-blue-50 px-3 py-1 text-[11px] font-bold text-blue-800 uppercase">My Recipes</div>' + recipes.map(r =>
       `<div class="p-2.5 hover:bg-slate-50 cursor-pointer text-xs flex justify-between" onclick="pickSearch(${i++})"><span class="font-bold text-blue-700">${esc(r.title)}</span><span class="text-blue-600 font-bold">${esc(r.calories)} kcal/serv</span></div>`).join('');
     h += '<div class="bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-600 uppercase">Online Food Database</div>';
-    h += online === null ? '<div class="p-3 text-xs text-slate-400">Searching...</div>' : online === false ? '<div class="p-3 text-xs text-slate-400">Online search unavailable.</div>'
+    h += online === null ? '<div class="p-3 text-xs text-slate-400">Searching... (the food database can take a few seconds)</div>' : online === false ? '<div class="p-3 text-xs text-slate-400">The food database is slow or unavailable. Keep typing to retry, or enter the values yourself.</div>'
       : online.length ? online.map(p => `<div class="p-2.5 hover:bg-slate-50 cursor-pointer text-xs flex justify-between" onclick="pickSearch(${i++})"><span class="font-semibold">${esc(p.name)}</span><span class="text-blue-600 font-bold">${p.missing ? '⚠ no data' : p.cal + ' kcal/100g'}</span></div>`).join('')
       : '<div class="p-3 text-xs text-slate-400">No online products found. Use custom entry!</div>';
     box.innerHTML = h; box.classList.remove('hidden');
   };
   draw(null);
   searchTimer = setTimeout(() => {
-    fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=8`)
-      .then(r => r.json()).then(d => {
+    offSearch(q).then(prods => {
         if (seq !== searchSeq) return;                      // ignore stale responses
-        const prods = (d.products || []).map(normProduct);
         searchItems = [...recipes.map(r => ({ recipe: r })), ...prods.map(p => ({ product: p }))];
         draw(prods);
       }).catch(() => { if (seq === searchSeq) draw(false); });
@@ -575,16 +636,15 @@ function searchIngredient() {
   clearTimeout(ingTimer); bases.ing = null;           // typing by hand switches off per-100 g scaling
   if (q.length < 2) return box.classList.add('hidden');
   const seq = ++ingSeq;
-  box.innerHTML = '<div class="p-3 text-xs text-slate-400">Searching...</div>'; box.classList.remove('hidden');
+  box.innerHTML = '<div class="p-3 text-xs text-slate-400">Searching... (the food database can take a few seconds)</div>'; box.classList.remove('hidden');
   ingTimer = setTimeout(() => {
-    fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=8`)
-      .then(r => r.json()).then(d => {
+    offSearch(q).then(prods => {
         if (seq !== ingSeq) return;                    // ignore stale responses
-        ingItems = (d.products || []).map(normProduct);
+        ingItems = prods;
         box.innerHTML = ingItems.length ? ingItems.map((p, i) =>
           `<div class="p-2.5 hover:bg-slate-50 cursor-pointer text-xs flex justify-between" onclick="pickIngredient(${i})"><span class="font-semibold">${esc(p.name)}</span><span class="text-blue-600 font-bold">${p.missing ? '⚠ no data' : p.cal + ' kcal/100g'}</span></div>`).join('')
           : '<div class="p-3 text-xs text-slate-400">No results. Type the values yourself.</div>';
-      }).catch(() => { if (seq === ingSeq) box.innerHTML = '<div class="p-3 text-xs text-slate-400">Online search unavailable. Type the values yourself.</div>'; });
+      }).catch(() => { if (seq === ingSeq) box.innerHTML = '<div class="p-3 text-xs text-slate-400">The food database is slow or unavailable. Keep typing to retry, or type the values yourself.</div>'; });
   }, 300);
 }
 function pickIngredient(i) { $('ing-search-results').classList.add('hidden'); fillProduct('ing', ingItems[i]); }
