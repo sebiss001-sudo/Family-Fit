@@ -46,7 +46,8 @@
     <span class="font-bold text-xl tracking-tight"><i class="fa-solid fa-heart-pulse text-emerald-500 mr-2"></i>FamilyFit <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full uppercase"><i class="fa-solid fa-cloud text-[10px] mr-1"></i>Live Sync</span></span>
     <div class="flex items-center space-x-2">
       <select id="userSelect" onchange="switchUser()" class="bg-slate-100 border border-slate-300 font-semibold py-1.5 px-3 rounded-lg text-sm"></select>
-      <button onclick="openProfileModal()" class="text-slate-500 hover:text-blue-600 p-1.5" title="Profile"><i class="fa-solid fa-user-gear text-lg"></i></button>
+      <button onclick="createNewProfile()" class="text-slate-500 hover:text-emerald-600 p-1.5" title="Add family member"><i class="fa-solid fa-user-plus text-lg"></i></button>
+      <button onclick="openProfileModal()" class="text-slate-500 hover:text-blue-600 p-1.5" title="Edit profile"><i class="fa-solid fa-user-gear text-lg"></i></button>
       <button onclick="signOut()" class="text-slate-400 hover:text-red-500 p-1.5" title="Sign out"><i class="fa-solid fa-right-from-bracket"></i></button>
     </div>
   </div>
@@ -226,7 +227,8 @@
       <div><label class="lbl" id="label-goal">Goal (kg)</label><input type="number" min="1" step="0.1" id="prof-goal" required class="inp"></div></div>
     <div><label class="lbl">Activity Level</label><select id="prof-activity" class="inp"><option value="1.2">Sedentary</option><option value="1.375">Lightly Active</option><option value="1.55">Moderately Active</option><option value="1.725">Very Active</option></select></div>
     <div class="pt-2 flex justify-between items-center">
-      <button type="button" onclick="createNewProfile()" class="text-xs text-blue-600 font-semibold">+ Add Member</button>
+      <div class="space-x-3"><button type="button" onclick="createNewProfile()" class="text-xs text-blue-600 font-semibold">+ Add member</button>
+      <button type="button" id="del-prof" onclick="deleteProfile()" class="text-xs text-red-500 hover:text-red-600 font-semibold"><i class="fa-solid fa-trash mr-1"></i>Delete profile</button></div>
       <div class="space-x-2"><button type="button" onclick="closeProfileModal()" class="sm text-slate-600">Cancel</button><button type="submit" class="sm bg-blue-600 text-white">Save</button></div></div>
   </form>
   <div class="border-t pt-3 flex gap-2"><button onclick="exportBackup()" class="sm bg-slate-100 border flex-1"><i class="fa-solid fa-download mr-1"></i>Export backup</button>
@@ -721,6 +723,7 @@ function openProfileModal() {
   $('prof-name').value = u.name; $('prof-units').value = prevUnits = u.units || 'metric'; $('prof-gender').value = u.gender; $('prof-age').value = u.age;
   $('prof-height').value = u.height; $('prof-weight').value = u.weight; $('prof-goal').value = u.goal; $('prof-activity').value = u.activity;
   Object.keys(CONV).forEach(id => { delete $(id).dataset.metric; delete $(id).dataset.shown; });
+  $('del-prof').classList.toggle('hidden', S.users.length < 2);
   setUnitLabels(); $('profile-modal').classList.remove('hidden');
 }
 function closeProfileModal() { $('profile-modal').classList.add('hidden'); }
@@ -755,6 +758,21 @@ function createNewProfile() {
   const id = 'u' + Date.now();
   S.users.push({ id, name, gender: 'female', age: 30, height: 165, weight: 60, goal: 58, activity: 1.375, units: 'metric' });
   cur = id; localStorage.setItem('ff_user', id); saveProfiles(); renderAll(); openProfileModal();
+}
+
+async function deleteProfile() {
+  if (S.users.length < 2) return alert('You need at least one profile.');
+  const u = user();
+  if (!confirm(`Delete "${u.name}" and ALL of their food, exercise, water and weight logs? This cannot be undone.`)) return;
+  try {
+    const snap = await db.collection('family_logs').where('user', '==', u.id).get();
+    for (let i = 0; i < snap.docs.length; i += 400) {
+      const b = db.batch(); snap.docs.slice(i, i + 400).forEach(d => b.delete(d.ref)); await b.commit();
+    }
+    S.users = S.users.filter(x => x.id !== u.id);
+    cur = S.users[0].id; localStorage.setItem('ff_user', cur);
+    await saveProfiles(); closeProfileModal(); renderAll();
+  } catch (e) { alert('Delete failed: ' + e.message); }
 }
 
 /* ---------- backup ---------- */
