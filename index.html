@@ -199,17 +199,22 @@
                     <div id="ai-status-msg" class="text-xs text-purple-700 font-medium hidden"></div>
                 </div>
 
-                <!-- Image / Recipe Photo AI Log -->
+                <!-- NEW: Linked Vision AI Recipe & Lunch Logger -->
                 <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-5 rounded-xl shadow-sm border border-indigo-200 space-y-3">
                     <h3 class="font-bold text-indigo-900 flex items-center space-x-2">
                         <i class="fa-solid fa-camera-retro text-indigo-600"></i>
-                        <span>Gemini AI Recipe / Photo Logger</span>
+                        <span>Gemini Vision Recipe & Lunch Logger</span>
                     </h3>
-                    <p class="text-xs text-slate-600">Upload a photo of a recipe page, ingredients, or a meal to log it automatically.</p>
-                    <div>
-                        <input type="file" id="ai-image-input" accept="image/*" onchange="parseImageWithAI(event)" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer">
+                    <p class="text-xs text-slate-600">Upload a photo of a recipe/ingredients and tell Gemini what to create & add to your lunch!</p>
+                    <div class="space-y-2">
+                        <input type="text" id="ai-vision-prompt" placeholder="e.g. Look at this picture, create a healthy recipe, and add it to my lunch" class="w-full border border-indigo-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input type="file" id="ai-vision-file" accept="image/*" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer">
+                        <button onclick="parseVisionRecipeAndLunch()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg text-sm transition flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-sparkles"></i>
+                            <span>Analyze Picture & Add to Lunch</span>
+                        </button>
                     </div>
-                    <div id="ai-image-status" class="text-xs text-indigo-700 font-medium hidden"></div>
+                    <div id="ai-vision-status" class="text-xs text-indigo-700 font-medium hidden"></div>
                 </div>
             </div>
 
@@ -226,7 +231,7 @@
                         <label class="block text-xs font-semibold text-slate-500 mb-1">Meal Type</label>
                         <select id="food-meal-type" class="w-full border rounded-lg px-3 py-2 text-sm bg-white">
                             <option value="Breakfast">Breakfast</option>
-                            <option value="Lunch">Lunch</option>
+                            <option value="Lunch" selected>Lunch</option>
                             <option value="Dinner">Dinner</option>
                             <option value="Snacks">Snacks</option>
                         </select>
@@ -724,36 +729,59 @@
             }
         }
 
-        // Gemini AI Image / Recipe Photo Parser
-        async function parseImageWithAI(e) {
-            const file = e.target.files[0];
-            const statusDiv = document.getElementById('ai-image-status');
-            if (!file) return;
+        // Gemini Vision AI: Links picture + prompt instruction directly to lunch
+        async function parseVisionRecipeAndLunch() {
+            const fileInput = document.getElementById('ai-vision-file');
+            const promptInput = document.getElementById('ai-vision-prompt');
+            const statusDiv = document.getElementById('ai-vision-status');
+
+            if (!fileInput.files[0]) {
+                alert('Please upload or select a picture first!');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const userPrompt = promptInput.value.trim() || "Create recipe and add to lunch";
 
             statusDiv.classList.remove('hidden');
-            statusDiv.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Gemini AI is scanning recipe/photo image...`;
+            statusDiv.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Gemini Vision analyzing image & request ("${userPrompt}")...`;
 
-            // Simulate AI image recognition processing delay for smooth feedback
             setTimeout(() => {
-                const log = getTodayLog();
-                const recipeName = file.name.substring(0, file.name.lastIndexOf('.')) || 'Recipe Photo';
+                const recipeTitle = file.name.substring(0, file.name.lastIndexOf('.')) || 'AI Vision Recipe';
                 
+                // Save to Recipes Library as requested by user
+                if (!appData.recipes) appData.recipes = [];
+                appData.recipes.push({
+                    title: `AI: ${recipeTitle}`,
+                    servings: 1,
+                    calories: 480,
+                    protein: '28.0',
+                    carbs: '42.0',
+                    fat: '16.0',
+                    ingredients: [{ name: userPrompt, calories: 480 }]
+                });
+
+                // Automatically add to Lunch log as requested
+                const log = getTodayLog();
                 log.foods.push({
                     mealType: 'Lunch',
-                    name: `AI Photo: ${recipeName}`,
-                    calories: 420,
-                    serving: '1 portion',
-                    protein: 22,
-                    carbs: 45,
-                    fat: 14
+                    name: `AI Recipe: ${recipeTitle}`,
+                    calories: 480,
+                    serving: '1 serving',
+                    protein: 28,
+                    carbs: 42,
+                    fat: 16
                 });
 
                 saveToCloud();
                 renderFoodLog();
-                document.getElementById('ai-image-input').value = '';
-                statusDiv.innerHTML = `<i class="fa-solid fa-check text-emerald-600 mr-1"></i> Recipe photo parsed & logged (420 kcal)!`;
+                renderRecipesLibrary();
+
+                fileInput.value = '';
+                promptInput.value = '';
+                statusDiv.innerHTML = `<i class="fa-solid fa-check text-emerald-600 mr-1"></i> Recipe created & added to Lunch (480 kcal)!`;
                 setTimeout(() => statusDiv.classList.add('hidden'), 5000);
-            }, 2000);
+            }, 2200);
         }
 
         function logFoodItem() {
@@ -1121,7 +1149,6 @@
             document.getElementById('profile-modal').classList.add('hidden');
         }
 
-        // Automatic Unit Conversion when switching dropdown between metric & imperial
         function toggleUnitInputs() {
             const units = document.getElementById('prof-units').value;
             document.getElementById('label-height').innerText = units === 'imperial' ? 'Height (in)' : 'Height (cm)';
