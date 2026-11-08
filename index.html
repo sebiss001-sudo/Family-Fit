@@ -137,7 +137,8 @@
       <div><label class="lbl">Number of Servings</label><input type="number" id="recipe-servings" value="4" min="1" oninput="calcRecipe()" class="inp"></div>
       <div class="border-t pt-3 space-y-2">
         <label class="lbl !text-blue-700 uppercase">Add Ingredients</label>
-        <div class="flex gap-2"><input id="ing-name" placeholder="Ingredient name" class="inp !text-xs"><button onclick="openRecipeScanner()" class="bg-slate-800 text-white px-3 rounded-lg text-xs" title="Scan"><i class="fa-solid fa-barcode"></i></button></div>
+        <div class="flex gap-2"><input id="ing-name" oninput="searchIngredient()" autocomplete="off" placeholder="Search or type an ingredient" class="inp !text-xs"><button onclick="openRecipeScanner()" class="bg-slate-800 text-white px-3 rounded-lg text-xs" title="Scan"><i class="fa-solid fa-barcode"></i></button></div>
+        <div id="ing-search-results" class="max-h-60 overflow-y-auto border rounded-lg hidden divide-y bg-white shadow-lg"></div>
         <div class="grid grid-cols-2 gap-2">
           <input type="number" min="0" id="ing-grams" oninput="rescale('ing')" placeholder="Amount (g)" class="inp !text-xs">
           <input type="number" min="0" id="ing-cals" placeholder="Calories for this amount" class="inp !text-xs"></div>
@@ -568,12 +569,31 @@ function calcRecipe() {
   $('rec-calc-cals').innerText = Math.round(sum(ingredients, 'calories') / s) + ' kcal';
   $('rec-calc-macros').innerText = `${r1(sum(ingredients, 'protein') / s)}g / ${r1(sum(ingredients, 'carbs') / s)}g / ${r1(sum(ingredients, 'fat') / s)}g`;
 }
+let ingItems = [], ingSeq = 0, ingTimer = null;
+function searchIngredient() {
+  const q = $('ing-name').value.trim(), box = $('ing-search-results');
+  clearTimeout(ingTimer); bases.ing = null;           // typing by hand switches off per-100 g scaling
+  if (q.length < 2) return box.classList.add('hidden');
+  const seq = ++ingSeq;
+  box.innerHTML = '<div class="p-3 text-xs text-slate-400">Searching...</div>'; box.classList.remove('hidden');
+  ingTimer = setTimeout(() => {
+    fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=8`)
+      .then(r => r.json()).then(d => {
+        if (seq !== ingSeq) return;                    // ignore stale responses
+        ingItems = (d.products || []).map(normProduct);
+        box.innerHTML = ingItems.length ? ingItems.map((p, i) =>
+          `<div class="p-2.5 hover:bg-slate-50 cursor-pointer text-xs flex justify-between" onclick="pickIngredient(${i})"><span class="font-semibold">${esc(p.name)}</span><span class="text-blue-600 font-bold">${p.missing ? '⚠ no data' : p.cal + ' kcal/100g'}</span></div>`).join('')
+          : '<div class="p-3 text-xs text-slate-400">No results. Type the values yourself.</div>';
+      }).catch(() => { if (seq === ingSeq) box.innerHTML = '<div class="p-3 text-xs text-slate-400">Online search unavailable. Type the values yourself.</div>'; });
+  }, 300);
+}
+function pickIngredient(i) { $('ing-search-results').classList.add('hidden'); fillProduct('ing', ingItems[i]); }
 function addIngredient() {
   const name = $('ing-name').value.trim();
   if (!name) return alert('Please enter an ingredient name');
   const g = $('ing-grams').value;
   ingredients.push({ name, serving: g ? g + ' g' : '1 portion', calories: num($('ing-cals').value), protein: num($('ing-protein').value), carbs: num($('ing-carbs').value), fat: num($('ing-fat').value) });
-  Object.values(FIELDS.ing).forEach(id => $(id).value = ''); bases.ing = null;
+  Object.values(FIELDS.ing).forEach(id => $(id).value = ''); bases.ing = null; $('ing-search-results').classList.add('hidden');
   renderIngredients(); calcRecipe();
 }
 function renderIngredients() {
