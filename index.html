@@ -5,13 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="manifest" href="manifest.json">
 <title>FamilyFit - Family Nutrition Tracker</title>
-<script src="https://cdn.tailwindcss.com/3.4.17"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="tailwind.css">
+<link rel="icon" href="icons/icon-192.png">
+<meta name="theme-color" content="#3b82f6">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js" integrity="sha384-dug+JxfBvklEQdJ4AYuBBAIScUz0bVN73xpy273gcAwHjb3qI0fXmuYNaNfdyYJG" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js" integrity="sha384-c9d8RFSL+u3exBOJ4Yp3HUJXS4znl9f+z66d1y54ig+ea249SpqR+w1wyvXz/lk+" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js" crossorigin="anonymous"></script>
 <style>
 .card{background:#fff;border:1px solid #e2e8f0;border-radius:.75rem;padding:1.25rem;box-shadow:0 1px 2px #0000000d}
 .inp{width:100%;border:1px solid #cbd5e1;border-radius:.5rem;padding:.5rem .75rem;font-size:.875rem;background:#fff}
@@ -79,7 +81,8 @@
         <div class="text-center my-4"><span id="water-amount" class="text-4xl font-extrabold text-blue-600">0</span><span class="text-slate-500 font-semibold"> ml</span><div id="water-liters" class="text-xs text-slate-400">(0.0 L)</div></div>
         <div class="w-full bg-slate-100 rounded-full h-2.5 mb-4 overflow-hidden"><div id="water-bar" class="bg-blue-500 h-full" style="width:0%"></div></div>
       </div>
-      <div class="grid grid-cols-3 gap-2">
+      <div class="grid grid-cols-4 gap-2">
+        <button onclick="addWater(-250)" class="bg-slate-50 hover:bg-slate-100 text-slate-600 font-semibold py-2.5 text-xs rounded-lg border" title="Undo">-250</button>
         <button onclick="addWater(250)" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold py-2.5 text-xs rounded-lg border border-blue-200">+250 ml</button>
         <button onclick="addWater(500)" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold py-2.5 text-xs rounded-lg border border-blue-200">+500 ml</button>
         <button onclick="addWater(750)" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold py-2.5 text-xs rounded-lg border border-blue-200">+750 ml</button>
@@ -225,7 +228,9 @@
     <div class="pt-2 flex justify-between items-center">
       <button type="button" onclick="createNewProfile()" class="text-xs text-blue-600 font-semibold">+ Add Member</button>
       <div class="space-x-2"><button type="button" onclick="closeProfileModal()" class="sm text-slate-600">Cancel</button><button type="submit" class="sm bg-blue-600 text-white">Save</button></div></div>
-  </form></div></div>
+  </form>
+  <div class="border-t pt-3 flex gap-2"><button onclick="exportBackup()" class="sm bg-slate-100 border flex-1"><i class="fa-solid fa-download mr-1"></i>Export backup</button>
+  <label class="sm bg-slate-100 border flex-1 text-center cursor-pointer"><i class="fa-solid fa-upload mr-1"></i>Import backup<input type="file" accept="application/json" class="hidden" onchange="importBackup(event)"></label></div></div></div>
 
 <!-- EDIT RECIPE MODAL -->
 <div id="edit-recipe-modal" class="modal hidden"><div class="card max-w-md w-full space-y-3">
@@ -255,6 +260,7 @@ firebase.initializeApp({
   messagingSenderId:"261234151239", appId:"1:261234151239:web:46d381035c9a03eba08662"
 });
 const db = firebase.firestore(), auth = firebase.auth();
+db.enablePersistence({ synchronizeTabs: true }).catch(e => console.debug('Offline cache unavailable:', e.code));
 
 /* ---------- helpers ---------- */
 const $ = id => document.getElementById(id);
@@ -281,7 +287,25 @@ const saveLog = l => db.collection('family_logs').doc(lk(l.user, l.date)).set(l)
 const saveProfiles = () => db.collection('family_data').doc('profiles').set({ users: S.users, recipes: S.recipes, favorites: S.favorites }).catch(e => alert('Save failed: ' + e.message));
 
 /* ---------- auth + sync ---------- */
-function signIn() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => showAuth(e.message)); }
+function authHelp(e) {
+  const host = location.hostname || '(this page)';
+  if (location.protocol === 'file:') return 'Open the app from your https:// GitHub Pages address, not from a file on your computer.';
+  const m = { 'auth/unauthorized-domain': `Firebase doesn't know this site yet. In Firebase Console > Authentication > Settings > Authorized domains, add: ${host}`,
+    'auth/operation-not-allowed': 'Google sign-in is turned off. In Firebase Console > Authentication > Sign-in method, enable Google.',
+    'auth/popup-closed-by-user': 'The sign-in window was closed. Tap the button and try again.',
+    'auth/cancelled-popup-request': 'Sign-in was interrupted. Tap the button and try again.',
+    'auth/network-request-failed': 'Network problem. Check your connection and try again.' };
+  return (m[e.code] || e.message) + ` [${e.code || 'error'}]`;
+}
+function signIn() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  $('auth-msg').textContent = 'Opening Google sign-in...';
+  auth.signInWithPopup(provider).catch(e => {
+    if (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment') return auth.signInWithRedirect(provider);
+    showAuth(authHelp(e));
+  });
+}
+auth.getRedirectResult().catch(e => showAuth(authHelp(e)));
 function signOut() { auth.signOut(); }
 function showAuth(msg, signedIn) {
   $('auth').classList.remove('hidden');
@@ -351,6 +375,7 @@ function switchTab(t) {
     $('mob-tab-' + id).classList.toggle('mob-active-tab', id === t);
   });
   if (t !== 'scanner') stopScanner();
+  closeRecipeScanner();
   renderAll();
 }
 function renderAll() {
@@ -413,7 +438,7 @@ function renderDashboard() {
       ${items || '<div class="text-[11px] text-slate-400 pl-4">No items logged</div>'}</div>`;
   }).join('');
 }
-function addWater(ml) { const l = getLog(); l.water = (l.water || 0) + ml; saveLog(l); renderAll(); }
+function addWater(ml) { const l = getLog(); l.water = Math.max(0, (l.water || 0) + ml); saveLog(l); renderAll(); }
 function copyYesterdayMeals() {
   const y = logs[lk(user().id, daysAgo(1))];
   if (!y || !y.foods.length) return alert('No meals found for yesterday!');
@@ -475,12 +500,13 @@ function fillProduct(k, p) {
   const m = /([\d.]+)\s*(g|ml)/i.exec(p.serving || '');
   $(F.g).value = m ? m[1] : 100;
   rescale(k);
+  if (p.missing) alert('This product has no nutrition data in the database (it would show 0 kcal). Please enter the values yourself.');
 }
 function normProduct(p) {
   const n = p.nutriments || {};
   let cal = n['energy-kcal_100g'] ?? n['energy-kcal'];
   if (cal == null && n.energy_100g) cal = n.energy_100g / 4.184;   // kJ fallback
-  return { name: [p.product_name || 'Unknown product', p.brands ? `(${p.brands})` : ''].join(' ').trim(), cal: Math.round(cal || 0),
+  return { name: [p.product_name || 'Unknown product', p.brands ? `(${p.brands})` : ''].join(' ').trim(), missing: cal == null, cal: Math.round(cal || 0),
     p: Number(n.proteins_100g) || 0, c: Number(n.carbohydrates_100g) || 0, f: Number(n.fat_100g) || 0, serving: p.serving_size || '' };
 }
 const lookup = code => fetch(`https://world.openfoodfacts.org/api/v0/product/${encodeURIComponent(code)}.json`).then(r => r.json()).then(d => d.status === 1 ? normProduct(d.product) : null);
@@ -499,7 +525,7 @@ function searchFood() {
       `<div class="p-2.5 hover:bg-slate-50 cursor-pointer text-xs flex justify-between" onclick="pickSearch(${i++})"><span class="font-bold text-blue-700">${esc(r.title)}</span><span class="text-blue-600 font-bold">${esc(r.calories)} kcal/serv</span></div>`).join('');
     h += '<div class="bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-600 uppercase">Online Food Database</div>';
     h += online === null ? '<div class="p-3 text-xs text-slate-400">Searching...</div>' : online === false ? '<div class="p-3 text-xs text-slate-400">Online search unavailable.</div>'
-      : online.length ? online.map(p => `<div class="p-2.5 hover:bg-slate-50 cursor-pointer text-xs flex justify-between" onclick="pickSearch(${i++})"><span class="font-semibold">${esc(p.name)}</span><span class="text-blue-600 font-bold">${p.cal} kcal/100g</span></div>`).join('')
+      : online.length ? online.map(p => `<div class="p-2.5 hover:bg-slate-50 cursor-pointer text-xs flex justify-between" onclick="pickSearch(${i++})"><span class="font-semibold">${esc(p.name)}</span><span class="text-blue-600 font-bold">${p.missing ? '⚠ no data' : p.cal + ' kcal/100g'}</span></div>`).join('')
       : '<div class="p-3 text-xs text-slate-400">No online products found. Use custom entry!</div>';
     box.innerHTML = h; box.classList.remove('hidden');
   };
@@ -559,6 +585,7 @@ function renderRecipes() {
     <div class="bg-slate-50 border p-4 rounded-xl space-y-2"><div class="flex justify-between items-start"><h4 class="font-bold">${esc(r.title)}</h4>
     <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">${esc(r.calories)} kcal / serv</span></div>
     <div class="text-xs text-slate-500">P: ${esc(r.protein)}g | C: ${esc(r.carbs)}g | F: ${esc(r.fat)}g</div>
+    ${r.manual ? '<div class="text-[11px] text-amber-600">✎ Values edited by hand; the ingredient list is for reference only.</div>' : ''}
     ${r.ingredients?.length ? `<div class="text-[11px] text-slate-500 italic">Ingredients: ${r.ingredients.map(x => esc(x.name)).join(', ')}</div>` : ''}
     <div class="pt-2 flex space-x-2"><button onclick="logRecipe(${i})" class="sm bg-blue-600 text-white">Log to Food</button>
     <button onclick="openEditRecipe(${i})" class="sm bg-slate-200"><i class="fa-solid fa-pen mr-1"></i>Edit</button>
@@ -582,21 +609,33 @@ function saveEditedRecipe() {
   let r = { ...old, title, servings: s, calories: num($('er-cal').value), protein: num($('er-p').value), carbs: num($('er-c').value), fat: num($('er-f').value) };
   if (s !== (old.servings || 1) && old.ingredients?.length)
     r = { ...r, calories: Math.round(sum(old.ingredients, 'calories') / s), protein: r1(sum(old.ingredients, 'protein') / s), carbs: r1(sum(old.ingredients, 'carbs') / s), fat: r1(sum(old.ingredients, 'fat') / s) };
+  const recomputed = s !== (old.servings || 1) && old.ingredients?.length;
+  if (recomputed) r.manual = false;
+  else if (r.calories !== old.calories || r.protein !== old.protein || r.carbs !== old.carbs || r.fat !== old.fat) r.manual = true;
   S.recipes[i] = r; saveProfiles(); $('edit-recipe-modal').classList.add('hidden'); renderAll();
 }
 
 /* ---------- scanners ---------- */
 const camErr = () => alert('Could not start camera. Check permissions (HTTPS required).');
-function startScanner() {
-  $('scanner-result').classList.add('hidden');
-  qr = qr || new Html5Qrcode('reader');
-  qr.start({ facingMode: 'environment' }, { fps: 5, qrbox: { width: 250, height: 250 } }, code => { stopScanner(); handleScan(code); }, () => {}).catch(camErr);
+let scanBusy = false, scanHandled = false;
+async function stopScanner() {
+  if (qr && qr.isScanning) { try { await qr.stop(); } catch (e) { console.debug('Scanner stop:', e); } }
 }
-function stopScanner() { if (qr && qr.isScanning) qr.stop().catch(() => {}); }
-function scanUploadedFile(e) {
-  const f = e.target.files[0]; if (!f) return;
-  qr = qr || new Html5Qrcode('reader'); stopScanner();
-  qr.scanFile(f, true).then(handleScan).catch(() => alert('Could not detect a valid barcode in this image.'));
+async function startScanner() {
+  if (scanBusy || (qr && qr.isScanning)) return;
+  scanBusy = true; scanHandled = false; $('scanner-result').classList.add('hidden');
+  try {
+    qr = qr || new Html5Qrcode('reader');
+    await qr.start({ facingMode: 'environment' }, { fps: 5, qrbox: { width: 250, height: 250 } },
+      async code => { if (scanHandled) return; scanHandled = true; await stopScanner(); handleScan(code); }, m => console.debug('Scanner:', m));
+  } catch (e) { console.error(e); camErr(); } finally { scanBusy = false; }
+}
+async function scanUploadedFile(e) {
+  const input = e.target, f = input.files[0]; if (!f) return;
+  await stopScanner();
+  try { qr = qr || new Html5Qrcode('reader'); handleScan(await qr.scanFile(f, true)); }
+  catch (err) { console.debug(err); alert('Could not detect a valid barcode in this image.'); }
+  finally { input.value = ''; }
 }
 function handleScan(code) {
   lookup(code).then(p => {
@@ -608,22 +647,30 @@ function handleScan(code) {
 }
 function renderScanPreview() {
   if (!pendingScan) return; const g = num($('scan-grams').value), p = pendingScan, k = g / 100;
-  $('scan-item-details').innerHTML = `For ${g} g: <strong>${Math.round(p.cal * k)} kcal</strong> | P: ${r1(p.p * k)}g | C: ${r1(p.c * k)}g | F: ${r1(p.f * k)}g<br><span class="text-slate-400">Per 100 g: ${p.cal} kcal</span>`;
+  $('scan-item-details').innerHTML = (p.missing ? '<span class="text-amber-600 font-semibold">⚠ No nutrition data found for this product.</span><br>' : '') + `For ${g} g: <strong>${Math.round(p.cal * k)} kcal</strong> | P: ${r1(p.p * k)}g | C: ${r1(p.c * k)}g | F: ${r1(p.f * k)}g<br><span class="text-slate-400">Per 100 g: ${p.cal} kcal</span>`;
 }
 function logScannedItem() {
-  if (!pendingScan) return; const p = pendingScan, g = num($('scan-grams').value) || 100, k = g / 100, l = getLog();
+  if (!pendingScan) return;
+  if (pendingScan.missing && !confirm('This product has no nutrition data. Log it with 0 kcal anyway?')) return;
+  const p = pendingScan, g = num($('scan-grams').value) || 100, k = g / 100, l = getLog();
   l.foods.push({ mealType: $('scan-meal').value, name: p.name, calories: Math.round(p.cal * k), serving: g + ' g', protein: r1(p.p * k), carbs: r1(p.c * k), fat: r1(p.f * k) });
   saveLog(l); pendingScan = null; $('scanner-result').classList.add('hidden'); switchTab('dashboard');
 }
-function openRecipeScanner() {
-  $('recipe-scanner-modal').classList.remove('hidden');
-  rqr = rqr || new Html5Qrcode('recipe-reader');
-  rqr.start({ facingMode: 'environment' }, { fps: 5, qrbox: { width: 200, height: 200 } }, code => {
-    closeRecipeScanner();
-    lookup(code).then(p => p ? fillProduct('ing', p) : alert('Product not found.')).catch(() => alert('Error connecting to barcode database'));
-  }, () => {}).catch(() => { closeRecipeScanner(); camErr(); });
+async function openRecipeScanner() {
+  if (scanBusy) return;
+  scanBusy = true; scanHandled = false; $('recipe-scanner-modal').classList.remove('hidden');
+  try {
+    rqr = rqr || new Html5Qrcode('recipe-reader');
+    await rqr.start({ facingMode: 'environment' }, { fps: 5, qrbox: { width: 200, height: 200 } }, async code => {
+      if (scanHandled) return; scanHandled = true; await closeRecipeScanner();
+      lookup(code).then(p => p ? fillProduct('ing', p) : alert('Product not found.')).catch(() => alert('Error connecting to barcode database'));
+    }, m => console.debug('Scanner:', m));
+  } catch (e) { console.error(e); await closeRecipeScanner(); camErr(); } finally { scanBusy = false; }
 }
-function closeRecipeScanner() { if (rqr && rqr.isScanning) rqr.stop().catch(() => {}); $('recipe-scanner-modal').classList.add('hidden'); }
+async function closeRecipeScanner() {
+  if (rqr && rqr.isScanning) { try { await rqr.stop(); } catch (e) { console.debug('Scanner stop:', e); } }
+  $('recipe-scanner-modal').classList.add('hidden');
+}
 
 /* ---------- exercise ---------- */
 const PRESETS = { 'Walking (5 km/h)': [30, 140], 'Running (8 km/h)': [30, 300], 'Cycling (15 km/h)': [45, 350], 'Strength Training': [45, 200] };
@@ -710,6 +757,31 @@ function createNewProfile() {
   cur = id; localStorage.setItem('ff_user', id); saveProfiles(); renderAll(); openProfileModal();
 }
 
+/* ---------- backup ---------- */
+async function exportBackup() {
+  try {
+    const snap = await db.collection('family_logs').get(), all = {};
+    snap.forEach(d => all[d.id] = d.data());
+    const blob = new Blob([JSON.stringify({ version: 2, exported: new Date().toISOString(), profiles: S, logs: all }, null, 1)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `familyfit-backup-${dateKey()}.json`; a.click(); URL.revokeObjectURL(a.href);
+  } catch (e) { alert('Export failed: ' + e.message); }
+}
+async function importBackup(e) {
+  const input = e.target, f = input.files[0]; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (d.version !== 2 || !Array.isArray(d.profiles?.users) || !d.profiles.users.length || typeof d.logs !== 'object') throw new Error('Not a valid FamilyFit backup file.');
+    if (!confirm('Import this backup? It replaces your profiles, recipes and favorites, and overwrites logs for the same days.')) return;
+    await db.collection('family_data').doc('profiles').set({ users: d.profiles.users, recipes: d.profiles.recipes || [], favorites: d.profiles.favorites || [] });
+    const entries = Object.entries(d.logs).filter(([k, v]) => /^.+_\d{4}-\d{2}-\d{2}$/.test(k) && v && Array.isArray(v.foods));
+    for (let i = 0; i < entries.length; i += 400) {
+      const b = db.batch(); entries.slice(i, i + 400).forEach(([k, v]) => b.set(db.collection('family_logs').doc(k), v)); await b.commit();
+    }
+    alert('Backup imported.'); closeProfileModal();
+  } catch (err) { alert('Import failed: ' + err.message); } finally { input.value = ''; }
+}
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js').catch(e => console.debug('Service worker:', e));
 switchTab('dashboard');
 </script>
 </body>
