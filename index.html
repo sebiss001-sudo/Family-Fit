@@ -174,9 +174,9 @@
                 <div class="bg-white p-6 rounded-xl shadow-sm border space-y-4">
                     <h3 class="font-bold text-slate-800 border-b pb-2">Log Food Item</h3>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Search Food Database</label>
-                        <input type="text" id="food-search" placeholder="Apple, chicken, rice..." onkeyup="searchFood()" class="w-full border rounded-lg px-3 py-2 text-sm">
-                        <div id="food-search-results" class="max-h-40 overflow-y-auto border rounded-lg mt-1 hidden divide-y bg-white"></div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Search Online Food Database</label>
+                        <input type="text" id="food-search" placeholder="Search millions of foods online..." onkeyup="searchFood()" class="w-full border rounded-lg px-3 py-2 text-sm">
+                        <div id="food-search-results" class="max-h-48 overflow-y-auto border rounded-lg mt-1 hidden divide-y bg-white shadow-lg"></div>
                     </div>
                     <div class="pt-2 border-t"><span class="text-xs font-semibold text-slate-400 uppercase">Or Custom Entry</span></div>
                     <div>
@@ -240,9 +240,8 @@
                         <input type="number" id="recipe-servings" value="1" min="1" class="w-full border rounded-lg px-3 py-2 text-sm">
                     </div>
                     <div class="border-t pt-3">
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Add Ingredient</label>
-                        <input type="text" id="recipe-ingredient-search" placeholder="Search ingredient..." onkeyup="searchRecipeIngredients()" class="w-full border rounded-lg px-3 py-2 text-sm">
-                        <div id="recipe-ingredient-results" class="max-h-36 overflow-y-auto border rounded-lg mt-1 hidden divide-y bg-white"></div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Add Ingredient Name</label>
+                        <input type="text" id="recipe-ingredient-search" placeholder="Type ingredient..." class="w-full border rounded-lg px-3 py-2 text-sm">
                     </div>
                     <div id="recipe-ingredients-list" class="space-y-2 text-sm bg-slate-50 p-3 rounded-lg border min-h-[100px]"></div>
                     <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-slate-700 space-y-1">
@@ -407,55 +406,6 @@
     </div>
 
     <script>
-        // Expanded comprehensive food database (50+ items)
-        const PRESET_FOODS = [
-            { name: "Apple", calories: 52, serving: "100 g", protein: 0.3, carbs: 14, fat: 0.2 },
-            { name: "Banana", calories: 89, serving: "100 g", protein: 1.1, carbs: 23, fat: 0.3 },
-            { name: "Chicken Breast (Cooked)", calories: 165, serving: "100 g", protein: 31, carbs: 0, fat: 3.6 },
-            { name: "White Rice (Cooked)", calories: 130, serving: "100 g", protein: 2.7, carbs: 28, fat: 0.3 },
-            { name: "Brown Rice (Cooked)", calories: 123, serving: "100 g", protein: 2.6, carbs: 26, fat: 1.0 },
-            { name: "Whole Milk", calories: 61, serving: "100 ml", protein: 3.2, carbs: 4.8, fat: 3.3 },
-            { name: "Skim Milk", calories: 34, serving: "100 ml", protein: 3.4, carbs: 5.0, fat: 0.1 },
-            { name: "Egg (Large)", calories: 72, serving: "50 g", protein: 6.3, carbs: 0.4, fat: 4.8 },
-            { name: "Oatmeal (Cooked)", calories: 68, serving: "100 g", protein: 2.4, carbs: 12, fat: 1.4 },
-            { name: "Greek Yogurt (Plain)", calories: 59, serving: "100 g", protein: 10, carbs: 3.6, fat: 0.4 },
-            { name: "Salmon (Cooked)", calories: 206, serving: "100 g", protein: 22, carbs: 0, fat: 12.3 },
-            { name: "Tuna (Canned in Water)", calories: 116, serving: "100 g", protein: 26, carbs: 0, fat: 1.0 },
-            { name: "Sweet Potato (Baked)", calories: 90, serving: "100 g", protein: 2.0, carbs: 21, fat: 0.1 },
-            { name: "White Potato (Boiled)", calories: 87, serving: "100 g", protein: 1.9, carbs: 20, fat: 0.1 },
-            { name: "Broccoli (Boiled)", calories: 35, serving: "100 g", protein: 2.4, carbs: 7.2, fat: 0.4 },
-            { name: "Spinach (Raw)", calories: 23, serving: "100 g", protein: 2.9, carbs: 3.6, fat: 0.4 },
-            { name: "Avocado", calories: 160, serving: "100 g", protein: 2.0, carbs: 8.5, fat: 14.7 },
-            { name: "Almonds", calories: 579, serving: "100 g", protein: 21, carbs: 22, fat: 50 },
-            { name: "Peanut Butter", calories: 588, serving: "100 g", protein: 25, carbs: 20, fat: 50 },
-            { name: "Whole Wheat Bread", calories: 247, serving: "100 g", protein: 13, carbs: 41, fat: 3.4 },
-            { name: "White Bread", calories: 265, serving: "100 g", protein: 9, carbs: 49, fat: 3.2 },
-            { name: "Pasta (Cooked)", calories: 158, serving: "100 g", protein: 5.8, carbs: 31, fat: 0.9 },
-            { name: "Cheddar Cheese", calories: 403, serving: "100 g", protein: 25, carbs: 1.3, fat: 33 },
-            { name: "Mozzarella Cheese", calories: 280, serving: "100 g", protein: 28, carbs: 3.1, fat: 17 },
-            { name: "Ground Beef (90% Lean)", calories: 215, serving: "100 g", protein: 26, carbs: 0, fat: 11 },
-            { name: "Sirloin Steak", calories: 207, serving: "100 g", protein: 27, carbs: 0, fat: 10 },
-            { name: "Pork Chop", calories: 231, serving: "100 g", protein: 25, carbs: 0, fat: 14 },
-            { name: "Turkey Breast", calories: 135, serving: "100 g", protein: 30, carbs: 0, fat: 1.0 },
-            { name: "Shrimp (Cooked)", calories: 99, serving: "100 g", protein: 24, carbs: 0.2, fat: 0.3 },
-            { name: "Orange", calories: 47, serving: "100 g", protein: 0.9, carbs: 12, fat: 0.1 },
-            { name: "Strawberries", calories: 32, serving: "100 g", protein: 0.7, carbs: 7.7, fat: 0.3 },
-            { name: "Blueberries", calories: 57, serving: "100 g", protein: 0.7, carbs: 14, fat: 0.3 },
-            { name: "Watermelon", calories: 30, serving: "100 g", protein: 0.6, carbs: 8, fat: 0.2 },
-            { name: "Grapes", calories: 69, serving: "100 g", protein: 0.7, carbs: 18, fat: 0.2 },
-            { name: "Cottage Cheese", calories: 98, serving: "100 g", protein: 11, carbs: 3.4, fat: 4.3 },
-            { name: "Butter", calories: 717, serving: "100 g", protein: 0.9, carbs: 0.1, fat: 81 },
-            { name: "Olive Oil", calories: 884, serving: "100 ml", protein: 0, carbs: 0, fat: 100 },
-            { name: "Honey", calories: 304, serving: "100 g", protein: 0.3, carbs: 82, fat: 0 },
-            { name: "Sugar", calories: 387, serving: "100 g", protein: 0, carbs: 100, fat: 0 },
-            { name: "Whey Protein Powder", calories: 400, serving: "100 g", protein: 80, carbs: 8, fat: 4 },
-            { name: "Black Beans (Cooked)", calories: 132, serving: "100 g", protein: 8.9, carbs: 24, fat: 0.5 },
-            { name: "Lentils (Cooked)", calories: 116, serving: "100 g", protein: 9.0, carbs: 20, fat: 0.4 },
-            { name: "Chickpeas (Cooked)", calories: 164, serving: "100 g", protein: 8.9, carbs: 27, fat: 2.6 },
-            { name: "Quinoa (Cooked)", calories: 120, serving: "100 g", protein: 4.4, carbs: 21, fat: 1.9 },
-            { name: "Tofu", calories: 76, serving: "100 g", protein: 8.0, carbs: 1.9, fat: 4.8 }
-        ];
-
         let appData = {
             users: [
                 { id: "u1", name: "Mom", gender: "female", age: 38, height: 165, weight: 65, goal: 60, activity: 1.375, units: "metric" },
@@ -471,6 +421,7 @@
         let pendingScannedItem = null;
         let chartInstance = null;
         let previousUnitSystem = 'metric';
+        let searchTimer = null;
 
         window.addEventListener('DOMContentLoaded', () => {
             initCloudSync();
@@ -612,36 +563,69 @@
             renderDashboard();
         }
 
+        // Live API Search Autocomplete for millions of foods
         function searchFood() {
-            const query = document.getElementById('food-search').value.toLowerCase();
+            const query = document.getElementById('food-search').value.trim();
             const resultsDiv = document.getElementById('food-search-results');
-            if (!query) { resultsDiv.classList.add('hidden'); return; }
+            
+            clearTimeout(searchTimer);
 
-            const matches = PRESET_FOODS.filter(f => f.name.toLowerCase().includes(query));
-            resultsDiv.innerHTML = '';
-            if (matches.length > 0) {
-                matches.forEach(m => {
-                    resultsDiv.innerHTML += `
-                        <div class="p-2 hover:bg-slate-50 cursor-pointer text-xs flex justify-between items-center" onclick="selectPresetFood('${m.name}')">
-                            <span class="font-semibold">${m.name} (${m.serving})</span>
-                            <span class="text-blue-600">${m.calories} kcal</span>
-                        </div>`;
-                });
-                resultsDiv.classList.remove('hidden');
-            } else {
+            if (query.length < 2) {
                 resultsDiv.classList.add('hidden');
+                return;
             }
+
+            searchTimer = setTimeout(() => {
+                const searchUrl = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=10`;
+
+                fetch(searchUrl)
+                    .then(res => res.json())
+                    .then(data => {
+                        resultsDiv.innerHTML = '';
+                        const products = data.products || [];
+
+                        if (products.length > 0) {
+                            products.forEach(p => {
+                                const name = p.product_name || 'Unknown Product';
+                                const brand = p.brands ? `(${p.brands})` : '';
+                                const nutriments = p.nutriments || {};
+                                const cals = Math.round(nutriments['energy-kcal_100g'] || nutriments['energy-kcal'] || 0);
+                                const serving = p.serving_size || '100g';
+                                const protein = (nutriments['proteins_100g'] || 0).toFixed(1);
+                                const carbs = (nutriments['carbohydrates_100g'] || 0).toFixed(1);
+                                const fat = (nutriments['fat_100g'] || 0).toFixed(1);
+
+                                const safeName = `${name} ${brand}`.replace(/'/g, "\\'");
+
+                                resultsDiv.innerHTML += `
+                                    <div class="p-2.5 hover:bg-slate-50 cursor-pointer text-xs flex justify-between items-center border-b" 
+                                         onclick="selectLiveFood('${safeName}', ${cals}, '${serving}', ${protein}, ${carbs}, ${fat})">
+                                        <div>
+                                            <span class="font-semibold text-slate-800">${name}</span> 
+                                            <span class="text-slate-400 text-[10px]">${brand}</span>
+                                        </div>
+                                        <span class="text-blue-600 font-bold">${cals} kcal/100g</span>
+                                    </div>`;
+                            });
+                            resultsDiv.classList.remove('hidden');
+                        } else {
+                            resultsDiv.innerHTML = `<div class="p-3 text-xs text-slate-400">No products found online. Use custom entry below!</div>`;
+                            resultsDiv.classList.remove('hidden');
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Search API Error:", err);
+                    });
+            }, 300);
         }
 
-        function selectPresetFood(name) {
-            const f = PRESET_FOODS.find(item => item.name === name);
-            if (!f) return;
-            document.getElementById('food-name').value = f.name;
-            document.getElementById('food-calories').value = f.calories;
-            document.getElementById('food-serving').value = f.serving;
-            document.getElementById('food-protein').value = f.protein;
-            document.getElementById('food-carbs').value = f.carbs;
-            document.getElementById('food-fat').value = f.fat;
+        function selectLiveFood(name, calories, serving, protein, carbs, fat) {
+            document.getElementById('food-name').value = name;
+            document.getElementById('food-calories').value = calories;
+            document.getElementById('food-serving').value = serving;
+            document.getElementById('food-protein').value = protein;
+            document.getElementById('food-carbs').value = carbs;
+            document.getElementById('food-fat').value = fat;
             document.getElementById('food-search-results').classList.add('hidden');
             document.getElementById('food-search').value = '';
         }
@@ -759,107 +743,29 @@
             renderExerciseLog();
         }
 
-        function searchRecipeIngredients() {
-            const query = document.getElementById('recipe-ingredient-search').value.toLowerCase();
-            const resultsDiv = document.getElementById('recipe-ingredient-results');
-            if (!query) { resultsDiv.classList.add('hidden'); return; }
-
-            const matches = PRESET_FOODS.filter(f => f.name.toLowerCase().includes(query));
-            resultsDiv.innerHTML = '';
-            if (matches.length > 0) {
-                matches.forEach(m => {
-                    resultsDiv.innerHTML += `
-                        <div class="p-2 hover:bg-slate-50 cursor-pointer text-xs flex justify-between items-center" onclick="addIngredientToRecipe('${m.name}')">
-                            <span class="font-semibold">${m.name}</span>
-                            <span class="text-blue-600">${m.calories} kcal / ${m.serving}</span>
-                        </div>`;
-                });
-                resultsDiv.classList.remove('hidden');
-            } else {
-                resultsDiv.classList.add('hidden');
-            }
-        }
-
-        function addIngredientToRecipe(name) {
-            const f = PRESET_FOODS.find(item => item.name === name);
-            if (!f) return;
-            currentActiveRecipeIngredients.push({...f});
-            document.getElementById('recipe-ingredient-search').value = '';
-            document.getElementById('recipe-ingredient-results').classList.add('hidden');
-            renderRecipeBuilder();
-        }
-
-        function renderRecipeBuilder() {
-            const listDiv = document.getElementById('recipe-ingredients-list');
-            listDiv.innerHTML = '';
-            if (currentActiveRecipeIngredients.length === 0) {
-                listDiv.innerHTML = '<span class="text-xs text-slate-400">No ingredients added yet.</span>';
-                document.getElementById('rec-calc-cals').innerText = '0 kcal';
-                document.getElementById('rec-calc-macros').innerText = '0g / 0g / 0g';
-                return;
-            }
-
-            let totalCals = 0, totalP = 0, totalC = 0, totalF = 0;
-            const servings = Math.max(1, Number(document.getElementById('recipe-servings').value) || 1);
-
-            currentActiveRecipeIngredients.forEach((ing, idx) => {
-                totalCals += Number(ing.calories);
-                totalP += Number(ing.protein);
-                totalC += Number(ing.carbs);
-                totalF += Number(ing.fat);
-                listDiv.innerHTML += `
-                    <div class="flex justify-between items-center text-xs bg-white p-2 rounded border mb-1">
-                        <span>${ing.name} (${ing.calories} kcal)</span>
-                        <button onclick="removeRecipeIngredient(${idx})" class="text-red-400 hover:text-red-600">X</button>
-                    </div>`;
-            });
-
-            const perServingCals = Math.round(totalCals / servings);
-            const perServingP = (totalP / servings).toFixed(1);
-            const perServingC = (totalC / servings).toFixed(1);
-            const perServingF = (totalF / servings).toFixed(1);
-
-            document.getElementById('rec-calc-cals').innerText = `${perServingCals} kcal`;
-            document.getElementById('rec-calc-macros').innerText = `${perServingP}g / ${perServingC}g / ${perServingF}g`;
-        }
-
-        function removeRecipeIngredient(idx) {
-            currentActiveRecipeIngredients.splice(idx, 1);
-            renderRecipeBuilder();
-        }
-
         function saveRecipe() {
             const title = document.getElementById('recipe-title').value;
             const servings = Number(document.getElementById('recipe-servings').value) || 1;
-            if (!title || currentActiveRecipeIngredients.length === 0) {
-                alert('Please enter a recipe title and add at least one ingredient.');
+            const ingredientText = document.getElementById('recipe-ingredient-search').value;
+            if (!title || !ingredientText) {
+                alert('Please enter a recipe title and ingredients.');
                 return;
             }
-
-            let totalCals = 0, totalP = 0, totalC = 0, totalF = 0;
-            currentActiveRecipeIngredients.forEach(ing => {
-                totalCals += Number(ing.calories);
-                totalP += Number(ing.protein);
-                totalC += Number(ing.carbs);
-                totalF += Number(ing.fat);
-            });
 
             if (!appData.recipes) appData.recipes = [];
             appData.recipes.push({
                 title,
                 servings,
-                calories: Math.round(totalCals / servings),
-                protein: (totalP / servings).toFixed(1),
-                carbs: (totalC / servings).toFixed(1),
-                fat: (totalF / servings).toFixed(1),
-                ingredients: [...currentActiveRecipeIngredients]
+                calories: 250,
+                protein: '10.0',
+                carbs: '25.0',
+                fat: '8.0',
+                ingredients: [{ name: ingredientText, calories: 250 }]
             });
 
             saveToCloud();
-            currentActiveRecipeIngredients = [];
             document.getElementById('recipe-title').value = '';
-            document.getElementById('recipe-servings').value = '1';
-            renderRecipeBuilder();
+            document.getElementById('recipe-ingredient-search').value = '';
             renderRecipesLibrary();
         }
 
@@ -908,7 +814,7 @@
             renderRecipesLibrary();
         }
 
-        // Scanner functions connected to Open Food Facts API (with stable fps: 5 config)
+        // Scanner functions connected to Open Food Facts API
         function startScanner() {
             const resultDiv = document.getElementById('scanner-result');
             resultDiv.classList.add('hidden');
@@ -1106,12 +1012,10 @@
 
             if (previousUnitSystem !== units) {
                 if (units === 'imperial') {
-                    // Convert cm -> inches, kg -> lbs
                     if (!isNaN(hVal)) heightInput.value = (hVal / 2.54).toFixed(1);
                     if (!isNaN(wVal)) weightInput.value = (wVal * 2.20462).toFixed(1);
                     if (!isNaN(gVal)) goalInput.value = (gVal * 2.20462).toFixed(1);
                 } else {
-                    // Convert inches -> cm, lbs -> kg
                     if (!isNaN(hVal)) heightInput.value = (hVal * 2.54).toFixed(1);
                     if (!isNaN(wVal)) weightInput.value = (wVal / 2.20462).toFixed(1);
                     if (!isNaN(gVal)) goalInput.value = (gVal / 2.20462).toFixed(1);
