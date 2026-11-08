@@ -883,12 +883,14 @@
             }
             html5QrCode.start(
                 { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 250, height: 250 } },
+                { fps: 5, qrbox: { width: 250, height: 250 } },
                 (decodedText) => {
                     stopScanner();
                     handleScannedBarcode(decodedText);
                 },
                 (errorMessage) => {}
+                    // Suppress continuous scanning errors while searching for a barcode
+                }
             ).catch(err => {
                 console.error("Camera start error:", err);
                 alert("Could not start camera. Please check permissions.");
