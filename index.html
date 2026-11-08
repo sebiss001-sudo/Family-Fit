@@ -28,7 +28,6 @@
 <body class="bg-slate-50 text-slate-800 min-h-screen font-sans pb-24 md:pb-6">
 
     <script>
-        // === YOUR FIREBASE CONFIGURATION ===
         const firebaseConfig = {
             apiKey: "AIzaSyDBXxmNhdct69g8hec_mUqZbq2vIBN1pJw",
             authDomain: "test-1dcd5.firebaseapp.com",
@@ -39,7 +38,6 @@
             appId: "1:261234151239:web:46d381035c9a03eba08662",
             measurementId: "G-1JTP5RYQ9Q"
         };
-        
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
     </script>
@@ -53,9 +51,6 @@
             </div>
             
             <div class="flex items-center space-x-2">
-                <span id="sync-status" class="text-xs text-emerald-600 font-semibold mr-2 hidden md:flex items-center">
-                    <i class="fa-solid fa-circle text-[8px] animate-pulse mr-1"></i> Connected
-                </span>
                 <label for="userSelect" class="text-xs font-semibold text-slate-500 uppercase">Profile:</label>
                 <select id="userSelect" onchange="switchUser()" class="bg-slate-100 border border-slate-300 text-slate-800 font-semibold py-1.5 px-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
                 <button onclick="openProfileModal()" class="text-slate-500 hover:text-blue-600 p-1.5 rounded-lg hover:bg-slate-100">
@@ -68,7 +63,7 @@
         <nav class="max-w-6xl mx-auto px-4 hidden md:flex space-x-8 text-sm text-slate-500 border-t border-slate-100 overflow-x-auto">
             <button onclick="switchTab('dashboard')" id="tab-dashboard" class="py-3 px-1 active-tab flex items-center space-x-2"><i class="fa-solid fa-chart-pie"></i><span>Dashboard</span></button>
             <button onclick="switchTab('food')" id="tab-food" class="py-3 px-1 flex items-center space-x-2"><i class="fa-solid fa-utensils"></i><span>Food Log</span></button>
-            <button onclick="switchTab('recipes')" id="tab-recipes" class="py-3 px-1 flex items-center space-x-2"><i class="fa-solid fa-book-open"></i><span>Recipe Builder</span></button>
+            <button onclick="switchTab('recipes')" id="tab-recipes" class="py-3 px-1 flex items-center space-x-2"><i class="fa-solid fa-book-open"></i><span>Recipes</span></button>
             <button onclick="switchTab('scanner')" id="tab-scanner" class="py-3 px-1 flex items-center space-x-2"><i class="fa-solid fa-barcode"></i><span>Scanner</span></button>
             <button onclick="switchTab('exercise')" id="tab-exercise" class="py-3 px-1 flex items-center space-x-2"><i class="fa-solid fa-person-running"></i><span>Exercise</span></button>
             <button onclick="switchTab('progress')" id="tab-progress" class="py-3 px-1 flex items-center space-x-2"><i class="fa-solid fa-chart-line"></i><span>Progress</span></button>
@@ -101,14 +96,32 @@
                     <span class="text-[10px] md:text-xs text-slate-400">kcal eaten</span>
                 </div>
                 <div class="bg-white p-4 md:p-5 rounded-xl shadow-sm border text-center">
-                    <span class="text-[10px] md:text-xs font-semibold text-slate-400 uppercase">Burned</span>
+                    <span class="text-[10px] md:text-xs font-semibold text-slate-400 uppercase">Sport Burned</span>
                     <div id="dash-burned" class="text-2xl md:text-3xl font-extrabold text-emerald-500 mt-1">0</div>
-                    <span class="text-[10px] md:text-xs text-slate-400">kcal burned</span>
+                    <span class="text-[10px] md:text-xs text-slate-400">kcal de sport</span>
                 </div>
                 <div class="bg-white p-4 md:p-5 rounded-xl shadow-sm border text-center">
-                    <span class="text-[10px] md:text-xs font-semibold text-slate-400 uppercase">Remaining</span>
+                    <span class="text-[10px] md:text-xs font-semibold text-slate-400 uppercase">Net Remaining</span>
                     <div id="dash-net" class="text-2xl md:text-3xl font-extrabold text-blue-600 mt-1">2,000</div>
-                    <span class="text-[10px] md:text-xs text-slate-400">kcal left</span>
+                    <span class="text-[10px] md:text-xs text-slate-400">budget net</span>
+                </div>
+            </div>
+
+            <!-- Weekly Average Summary Card -->
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-5 rounded-xl shadow-sm border border-blue-200 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                    <h3 class="font-bold text-blue-900 text-sm"><i class="fa-solid fa-chart-line mr-2"></i>Résumé des 7 derniers jours</h3>
+                    <p class="text-xs text-slate-600 mt-0.5">Moyenne de calories consommées et de sport par jour cette semaine.</p>
+                </div>
+                <div class="flex gap-4 text-center">
+                    <div class="bg-white px-4 py-2 rounded-lg shadow-sm border">
+                        <span class="text-[10px] font-semibold text-slate-400 uppercase block">Moy. Consommée</span>
+                        <span id="weekly-avg-cals" class="text-base font-extrabold text-amber-500">0 kcal</span>
+                    </div>
+                    <div class="bg-white px-4 py-2 rounded-lg shadow-sm border">
+                        <span class="text-[10px] font-semibold text-slate-400 uppercase block">Moy. Sport</span>
+                        <span id="weekly-avg-burned" class="text-base font-extrabold text-emerald-500">0 kcal</span>
+                    </div>
                 </div>
             </div>
 
@@ -176,45 +189,25 @@
 
             <!-- Detailed Meals Overview -->
             <div class="bg-white rounded-xl shadow-sm border p-5 md:p-6 space-y-4">
-                <h3 class="font-bold text-slate-800">Today's Meal Summary</h3>
+                <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-slate-800">Today's Meal Summary</h3>
+                    <button onclick="copyYesterdayMeals()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-lg border transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-copy text-blue-600"></i>
+                        <span>Répéter les repas d'hier</span>
+                    </button>
+                </div>
                 <div id="dash-meals-list" class="space-y-4 divide-y divide-slate-100"></div>
             </div>
         </section>
 
         <!-- FOOD LOG VIEW -->
         <section id="view-food" class="space-y-6 hidden">
-            <!-- GEMINI AI SMART LOG CARDS -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Text AI Log -->
-                <div class="bg-gradient-to-r from-purple-50 to-blue-50 p-5 rounded-xl shadow-sm border border-purple-200 space-y-3">
-                    <h3 class="font-bold text-purple-900 flex items-center space-x-2">
-                        <i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i>
-                        <span>Gemini AI Text Logger</span>
-                    </h3>
-                    <p class="text-xs text-slate-600">Describe what you ate in plain English (e.g. "2 scrambled eggs with toast").</p>
-                    <div class="flex gap-2">
-                        <input type="text" id="ai-food-input" placeholder="Type meal description..." class="flex-1 border border-purple-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500">
-                        <button onclick="parseMealWithAI()" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-2 rounded-lg text-sm transition">AI Log</button>
-                    </div>
-                    <div id="ai-status-msg" class="text-xs text-purple-700 font-medium hidden"></div>
-                </div>
-
-                <!-- Vision AI Recipe & Lunch Logger -->
-                <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-5 rounded-xl shadow-sm border border-indigo-200 space-y-3">
-                    <h3 class="font-bold text-indigo-900 flex items-center space-x-2">
-                        <i class="fa-solid fa-camera-retro text-indigo-600"></i>
-                        <span>Gemini Vision Recipe & Lunch Logger</span>
-                    </h3>
-                    <p class="text-xs text-slate-600">Upload a photo of a recipe/ingredients and tell Gemini what to create & add to your lunch!</p>
-                    <div class="space-y-2">
-                        <input type="text" id="ai-vision-prompt" placeholder="e.g. Look at this picture, create a healthy recipe, and add it to my lunch" class="w-full border border-indigo-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <input type="file" id="ai-vision-file" accept="image/*" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer">
-                        <button onclick="parseVisionRecipeAndLunch()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg text-sm transition flex items-center justify-center space-x-2">
-                            <i class="fa-solid fa-sparkles"></i>
-                            <span>Analyze Picture & Add to Lunch</span>
-                        </button>
-                    </div>
-                    <div id="ai-vision-status" class="text-xs text-indigo-700 font-medium hidden"></div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border space-y-2">
+                <h4 class="font-bold text-xs text-slate-500 uppercase tracking-wide flex items-center">
+                    <i class="fa-solid fa-star text-amber-400 mr-1.5"></i> Favoris & Aliments Fréquents (Ajout en 1 clic)
+                </h4>
+                <div id="frequent-foods-container" class="flex flex-wrap gap-2 pt-1">
+                    <span class="text-xs text-slate-400 italic">Aucun favori pour le moment. Marquez vos aliments favoris !</span>
                 </div>
             </div>
 
@@ -274,10 +267,9 @@
             </div>
         </section>
 
-        <!-- RECIPE & INGREDIENT BUILDER VIEW -->
+        <!-- RECIPE BUILDER VIEW -->
         <section id="view-recipes" class="space-y-6 hidden">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Recipe Builder Form with Multi-Ingredients & Barcode / Search -->
                 <div class="bg-white p-5 md:p-6 rounded-xl shadow-sm border space-y-4">
                     <h3 class="font-bold text-slate-800 border-b pb-2">Create Recipe (Multiple Ingredients)</h3>
                     <div>
@@ -340,7 +332,6 @@
                     <button onclick="stopScanner()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold px-4 py-2.5 rounded-lg text-sm">Stop</button>
                 </div>
                 
-                <!-- File Upload Barcode Fallback -->
                 <div class="mt-4 pt-4 border-t text-left">
                     <label class="block text-xs font-semibold text-slate-500 mb-2">Or Upload Barcode Image</label>
                     <input type="file" id="barcode-file-input" accept="image/*" onchange="scanUploadedFile(event)" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
@@ -378,7 +369,7 @@
                         <input type="number" id="exercise-duration" placeholder="30" class="w-full border rounded-lg px-3 py-2 text-sm">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Calories Burned</label>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Calories Burned (Brûlées)</label>
                         <input type="number" id="exercise-calories" placeholder="200" class="w-full border rounded-lg px-3 py-2 text-sm">
                     </div>
                     <button onclick="logExerciseItem()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-lg text-sm">Add Exercise</button>
@@ -521,7 +512,7 @@
         </div>
     </div>
 
-    <!-- RECIPE SCANNER MODAL (For Scanning Recipe Ingredients via Barcode) -->
+    <!-- RECIPE SCANNER MODAL -->
     <div id="recipe-scanner-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="bg-white rounded-xl shadow-xl border max-w-md w-full p-6 space-y-4 text-center">
             <div class="flex justify-between items-center border-b pb-2">
@@ -541,7 +532,8 @@
             ],
             currentUser: "u1",
             logs: {},
-            recipes: []
+            recipes: [],
+            favorites: []
         };
 
         let html5QrCode = null;
@@ -550,8 +542,6 @@
         let chartInstance = null;
         let previousUnitSystem = 'metric';
         let searchTimer = null;
-
-        // Current recipe ingredients buffer in builder
         let currentRecipeIngredients = [];
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -565,8 +555,10 @@
                   if (doc.exists) {
                       appData = doc.data();
                       appData.users.forEach(u => { if (!u.units) u.units = 'metric'; });
+                      if (!appData.favorites) appData.favorites = [];
                       populateUserDropdown();
                       renderDashboard();
+                      renderFavorites();
                   } else {
                       saveToCloud();
                   }
@@ -619,14 +611,14 @@
             if (activeMob) activeMob.classList.add('mob-active-tab');
 
             if (tabId === 'dashboard') renderDashboard();
-            if (tabId === 'food') renderFoodLog();
+            if (tabId === 'food') { renderFoodLog(); renderFavorites(); }
             if (tabId === 'recipes') renderRecipesLibrary();
             if (tabId === 'exercise') renderExerciseLog();
             if (tabId === 'progress') updateProgressChart();
             if (tabId !== 'scanner') stopScanner();
         }
 
-        // Dashboard rendering with detailed meal item lists below each meal type
+        // Dashboard rendering with percentages and overage amounts for macros
         function renderDashboard() {
             const user = getCurrentUserObj();
             const log = getTodayLog();
@@ -650,18 +642,50 @@
             document.getElementById('dash-burned').innerText = burnedCals.toLocaleString();
             document.getElementById('dash-net').innerText = netRemaining.toLocaleString();
 
+            calculateWeeklyAverages();
+
             const targetCarbs = Math.round((targetCals * 0.4) / 4);
             const targetProtein = Math.round((targetCals * 0.3) / 4);
             const targetFat = Math.round((targetCals * 0.3) / 9);
 
-            document.getElementById('macro-carbs-text').innerText = `${Math.round(carbsG)} / ${targetCarbs} g`;
-            document.getElementById('macro-carbs-bar').style.width = `${Math.min(100, (carbsG / targetCarbs) * 100)}%`;
+            // Carbs calculation & display
+            const carbsPercent = targetCarbs > 0 ? Math.round((carbsG / targetCarbs) * 100) : 0;
+            const carbsOver = carbsG > targetCarbs ? ` (${carbsPercent}% • +${Math.round(carbsG - targetCarbs)}g over)` : ` (${carbsPercent}%)`;
+            document.getElementById('macro-carbs-text').innerText = `${Math.round(carbsG)} / ${targetCarbs} g${carbsOver}`;
+            document.getElementById('macro-carbs-bar').style.width = `${Math.min(100, carbsPercent)}%`;
+            if (carbsG > targetCarbs) {
+                document.getElementById('macro-carbs-bar').classList.remove('bg-blue-500');
+                document.getElementById('macro-carbs-bar').classList.add('bg-red-500');
+            } else {
+                document.getElementById('macro-carbs-bar').classList.remove('bg-red-500');
+                document.getElementById('macro-carbs-bar').classList.add('bg-blue-500');
+            }
 
-            document.getElementById('macro-protein-text').innerText = `${Math.round(proteinG)} / ${targetProtein} g`;
-            document.getElementById('macro-protein-bar').style.width = `${Math.min(100, (proteinG / targetProtein) * 100)}%`;
+            // Protein calculation & display
+            const proteinPercent = targetProtein > 0 ? Math.round((proteinG / targetProtein) * 100) : 0;
+            const proteinOver = proteinG > targetProtein ? ` (${proteinPercent}% • +${Math.round(proteinG - targetProtein)}g over)` : ` (${proteinPercent}%)`;
+            document.getElementById('macro-protein-text').innerText = `${Math.round(proteinG)} / ${targetProtein} g${proteinOver}`;
+            document.getElementById('macro-protein-bar').style.width = `${Math.min(100, proteinPercent)}%`;
+            if (proteinG > targetProtein) {
+                document.getElementById('macro-protein-bar').classList.remove('bg-emerald-500');
+                document.getElementById('macro-protein-bar').classList.add('bg-red-500');
+            } else {
+                document.getElementById('macro-protein-bar').classList.remove('bg-red-500');
+                document.getElementById('macro-protein-bar').classList.add('bg-emerald-500');
+            }
 
-            document.getElementById('macro-fat-text').innerText = `${Math.round(fatG)} / ${targetFat} g`;
-            document.getElementById('macro-fat-bar').style.width = `${Math.min(100, (fatG / targetFat) * 100)}%`;
+            // Fats calculation & display
+            const fatPercent = targetFat > 0 ? Math.round((fatG / targetFat) * 100) : 0;
+            const fatOver = fatG > targetFat ? ` (${fatPercent}% • +${Math.round(fatG - targetFat)}g over)` : ` (${fatPercent}%)`;
+            document.getElementById('macro-fat-text').innerText = `${Math.round(fatG)} / ${targetFat} g${fatOver}`;
+            document.getElementById('macro-fat-bar').style.width = `${Math.min(100, fatPercent)}%`;
+            if (fatG > targetFat) {
+                document.getElementById('macro-fat-bar').classList.remove('bg-amber-500');
+                document.getElementById('macro-fat-bar').classList.add('bg-red-500');
+            } else {
+                document.getElementById('macro-fat-bar').classList.remove('bg-red-500');
+                document.getElementById('macro-fat-bar').classList.add('bg-amber-500');
+            }
 
             const waterTarget = 2500;
             document.getElementById('water-amount').innerText = log.water.toLocaleString();
@@ -677,11 +701,14 @@
                 
                 let itemsHtml = '';
                 if (typeFoods.length > 0) {
-                    typeFoods.forEach(item => {
+                    typeFoods.forEach((item, itemIdx) => {
                         itemsHtml += `
                             <div class="flex justify-between items-center text-xs text-slate-600 pl-4 py-1 border-l-2 border-blue-200">
                                 <span>${item.name} <span class="text-slate-400">(${item.serving || '1 serv'})</span></span>
-                                <span class="font-semibold text-slate-700">${item.calories} kcal</span>
+                                <div class="flex items-center space-x-3">
+                                    <span class="font-semibold text-slate-700">${item.calories} kcal</span>
+                                    <button onclick="removeFoodItemDirect(${itemIdx})" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash text-[10px]"></i></button>
+                                </div>
                             </div>`;
                     });
                 } else {
@@ -699,6 +726,60 @@
             });
         }
 
+        function calculateWeeklyAverages() {
+            let totalCalsWeek = 0;
+            let totalBurnedWeek = 0;
+            let daysCount = 0;
+
+            for (let i = 0; i < 7; i++) {
+                let d = new Date();
+                d.setDate(d.getDate() - i);
+                let dateStr = d.toISOString().split('T')[0];
+                let key = `${appData.currentUser}_${dateStr}`;
+
+                if (appData.logs[key]) {
+                    daysCount++;
+                    let dayCals = appData.logs[key].foods.reduce((sum, f) => sum + Number(f.calories), 0);
+                    let dayBurned = appData.logs[key].exercises.reduce((sum, e) => sum + Number(e.calories), 0);
+                    totalCalsWeek += dayCals;
+                    totalBurnedWeek += dayBurned;
+                }
+            }
+
+            const avgCals = daysCount > 0 ? Math.round(totalCalsWeek / daysCount) : 0;
+            const avgBurned = daysCount > 0 ? Math.round(totalBurnedWeek / daysCount) : 0;
+
+            document.getElementById('weekly-avg-cals').innerText = `${avgCals} kcal`;
+            document.getElementById('weekly-avg-burned').innerText = `${avgBurned} kcal`;
+        }
+
+        function copyYesterdayMeals() {
+            let d = new Date();
+            d.setDate(d.getDate() - 1);
+            let yesterdayStr = d.toISOString().split('T')[0];
+            let yesterdayKey = `${appData.currentUser}_${yesterdayStr}`;
+
+            if (!appData.logs[yesterdayKey] || appData.logs[yesterdayKey].foods.length === 0) {
+                alert("Aucun repas trouvé pour hier !");
+                return;
+            }
+
+            const todayLog = getTodayLog();
+            const copiedFoods = JSON.parse(JSON.stringify(appData.logs[yesterdayKey].foods));
+            todayLog.foods.push(...copiedFoods);
+
+            saveToCloud();
+            renderDashboard();
+            alert("Les repas d'hier ont été dupliqués avec succès !");
+        }
+
+        function removeFoodItemDirect(idx) {
+            const log = getTodayLog();
+            log.foods.splice(idx, 1);
+            saveToCloud();
+            renderDashboard();
+        }
+
         function populateUserDropdown() {
             const select = document.getElementById('userSelect');
             select.innerHTML = '';
@@ -710,6 +791,7 @@
         function switchUser() {
             appData.currentUser = document.getElementById('userSelect').value;
             renderDashboard();
+            renderFavorites();
         }
 
         function addWater(amount) {
@@ -719,7 +801,45 @@
             renderDashboard();
         }
 
-        // Search Food function
+        function toggleFavorite(name, calories, serving, protein, carbs, fat) {
+            if (!appData.favorites) appData.favorites = [];
+            const existingIdx = appData.favorites.findIndex(f => f.name === name);
+            if (existingIdx >= 0) {
+                appData.favorites.splice(existingIdx, 1);
+            } else {
+                appData.favorites.push({ name, calories, serving, protein, carbs, fat });
+            }
+            saveToCloud();
+            renderFavorites();
+        }
+
+        function renderFavorites() {
+            const container = document.getElementById('frequent-foods-container');
+            if (!container) return;
+            if (!appData.favorites || appData.favorites.length === 0) {
+                container.innerHTML = `<span class="text-xs text-slate-400 italic">Aucun favori pour le moment. Marquez vos aliments favoris !</span>`;
+                return;
+            }
+            container.innerHTML = '';
+            appData.favorites.forEach((fav) => {
+                container.innerHTML += `
+                    <button onclick="logFavoriteItem('${fav.name.replace(/'/g, "\\'")}', ${fav.calories}, '${fav.serving}', ${fav.protein}, ${fav.carbs}, ${fav.fat})" 
+                        class="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center space-x-1 transition">
+                        <i class="fa-solid fa-star text-amber-500 mr-1 text-[10px]"></i>
+                        <span>${fav.name} (${fav.calories} kcal)</span>
+                    </button>`;
+            });
+        }
+
+        function logFavoriteItem(name, calories, serving, protein, carbs, fat) {
+            const mealType = document.getElementById('food-meal-type').value;
+            const log = getTodayLog();
+            log.foods.push({ mealType, name, calories, serving, protein, carbs, fat });
+            saveToCloud();
+            renderFoodLog();
+            alert(`"${name}" ajouté à votre journal (${mealType}) !`);
+        }
+
         function searchFood() {
             const query = document.getElementById('food-search').value.trim().toLowerCase();
             const resultsDiv = document.getElementById('food-search-results');
@@ -808,7 +928,6 @@
             document.getElementById('food-search').value = '';
         }
 
-        // Multi-Ingredient Recipe Builder Logic
         function addIngredientToRecipe() {
             const name = document.getElementById('ing-name').value.trim();
             const calories = Number(document.getElementById('ing-cals').value) || 0;
@@ -821,7 +940,6 @@
 
             currentRecipeIngredients.push({ name, calories, serving, protein, carbs, fat });
 
-            // Clear inputs
             document.getElementById('ing-name').value = '';
             document.getElementById('ing-cals').value = '';
             document.getElementById('ing-serving').value = '';
@@ -918,7 +1036,6 @@
             alert('Recipe saved successfully!');
         }
 
-        // Open Barcode Scanner specifically for Recipe Ingredients
         function openRecipeScanner() {
             document.getElementById('recipe-scanner-modal').classList.remove('hidden');
             if (!recipeHtml5QrCode) {
@@ -1056,7 +1173,6 @@
             renderRecipesLibrary();
         }
 
-        // Gemini AI Text Parser
         async function parseMealWithAI() {
             const input = document.getElementById('ai-food-input').value.trim();
             const statusDiv = document.getElementById('ai-status-msg');
@@ -1185,6 +1301,7 @@
                 return;
             }
             log.foods.forEach((f, idx) => {
+                const isFav = appData.favorites && appData.favorites.some(fav => fav.name === f.name);
                 container.innerHTML += `
                     <div class="flex justify-between items-center p-3 bg-slate-50 border rounded-lg text-sm">
                         <div>
@@ -1193,6 +1310,10 @@
                             <div class="text-xs text-slate-500 mt-0.5">P: ${f.protein}g | C: ${f.carbs}g | F: ${f.fat}g</div>
                         </div>
                         <div class="flex items-center space-x-3">
+                            <button onclick="toggleFavorite('${f.name.replace(/'/g, "\\'")}', ${f.calories}, '${f.serving || '1 serv'}', ${f.protein}, ${f.carbs}, ${f.fat})" 
+                                class="text-sm ${isFav ? 'text-amber-500' : 'text-slate-300 hover:text-amber-400'}" title="Ajouter aux favoris">
+                                <i class="fa-solid fa-star"></i>
+                            </button>
                             <span class="font-extrabold text-blue-600">${f.calories} kcal</span>
                             <button onclick="removeFoodItem(${idx})" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>
                         </div>
@@ -1234,6 +1355,7 @@
             document.getElementById('exercise-name').value = '';
             document.getElementById('exercise-duration').value = '';
             document.getElementById('exercise-calories').value = '';
+            alert('Séance de sport enregistrée ! Les calories brûlées ont été déduites de votre total de la journée.');
         }
 
         function renderExerciseLog() {
@@ -1251,7 +1373,7 @@
                             <strong class="text-slate-800">${e.name}</strong> <span class="text-xs text-slate-400">(${e.duration || 0} mins)</span>
                         </div>
                         <div class="flex items-center space-x-3">
-                            <span class="font-extrabold text-emerald-600">+${e.calories} kcal</span>
+                            <span class="font-extrabold text-emerald-600">-${e.calories} kcal brûlées</span>
                             <button onclick="removeExerciseItem(${idx})" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </div>`;
@@ -1265,7 +1387,6 @@
             renderExerciseLog();
         }
 
-        // Scanner functions connected to Open Food Facts API
         function startScanner() {
             const resultDiv = document.getElementById('scanner-result');
             resultDiv.classList.add('hidden');
@@ -1281,14 +1402,13 @@
                 },
                 (errorMessage) => {}
             ).catch(err => {
-                console.error("Camera start error:", err);
                 alert("Could not start camera. Please check permissions and ensure HTTPS.");
             });
         }
 
         function stopScanner() {
             if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().catch(err => console.log(err));
+                html5QrCode.stop().catch(err => {});
             }
         }
 
@@ -1307,15 +1427,12 @@
                     handleScannedBarcode(decodedText);
                 })
                 .catch(err => {
-                    console.error("Error scanning file:", err);
-                    alert("Could not detect a valid barcode in this image. Please try a clearer photo.");
+                    alert("Could not detect a valid barcode in this image.");
                 });
         }
 
         function handleScannedBarcode(code) {
-            const apiUrl = `https://world.openfoodfacts.org/api/v0/product/${code}.json`;
-
-            fetch(apiUrl)
+            fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 1) {
@@ -1339,13 +1456,12 @@
                         `;
                         document.getElementById('scanner-result').classList.remove('hidden');
                     } else {
-                        alert("Product not found in Open Food Facts database. You can add it manually!");
+                        alert("Product not found in Open Food Facts database.");
                         stopScanner();
                     }
                 })
                 .catch(err => {
-                    console.error("API Error:", err);
-                    alert("Failed to lookup barcode. Please check your internet connection.");
+                    alert("Failed to lookup barcode.");
                 });
         }
 
@@ -1451,27 +1567,6 @@
             document.getElementById('label-height').innerText = units === 'imperial' ? 'Height (in)' : 'Height (cm)';
             document.getElementById('label-weight').innerText = units === 'imperial' ? 'Weight (lbs)' : 'Weight (kg)';
             document.getElementById('label-goal').innerText = units === 'imperial' ? 'Goal (lbs)' : 'Goal (kg)';
-
-            const heightInput = document.getElementById('prof-height');
-            const weightInput = document.getElementById('prof-weight');
-            const goalInput = document.getElementById('prof-goal');
-
-            let hVal = parseFloat(heightInput.value);
-            let wVal = parseFloat(weightInput.value);
-            let gVal = parseFloat(goalInput.value);
-
-            if (previousUnitSystem !== units) {
-                if (units === 'imperial') {
-                    if (!isNaN(hVal)) heightInput.value = (hVal / 2.54).toFixed(1);
-                    if (!isNaN(wVal)) weightInput.value = (wVal * 2.20462).toFixed(1);
-                    if (!isNaN(gVal)) goalInput.value = (gVal * 2.20462).toFixed(1);
-                } else {
-                    if (!isNaN(hVal)) heightInput.value = (hVal * 2.54).toFixed(1);
-                    if (!isNaN(wVal)) weightInput.value = (wVal / 2.20462).toFixed(1);
-                    if (!isNaN(gVal)) goalInput.value = (gVal / 2.20462).toFixed(1);
-                }
-                previousUnitSystem = units;
-            }
         }
 
         function saveProfile(e) {
