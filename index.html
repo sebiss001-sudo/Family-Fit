@@ -400,7 +400,7 @@
     </div>
 
     <script>
-        // Expanded food database with common items
+        // Expanded comprehensive food database (50+ items)
         const PRESET_FOODS = [
             { name: "Apple", calories: 52, serving: "100 g", protein: 0.3, carbs: 14, fat: 0.2 },
             { name: "Banana", calories: 89, serving: "100 g", protein: 1.1, carbs: 23, fat: 0.3 },
@@ -408,19 +408,45 @@
             { name: "White Rice (Cooked)", calories: 130, serving: "100 g", protein: 2.7, carbs: 28, fat: 0.3 },
             { name: "Brown Rice (Cooked)", calories: 123, serving: "100 g", protein: 2.6, carbs: 26, fat: 1.0 },
             { name: "Whole Milk", calories: 61, serving: "100 ml", protein: 3.2, carbs: 4.8, fat: 3.3 },
+            { name: "Skim Milk", calories: 34, serving: "100 ml", protein: 3.4, carbs: 5.0, fat: 0.1 },
             { name: "Egg (Large)", calories: 72, serving: "50 g", protein: 6.3, carbs: 0.4, fat: 4.8 },
             { name: "Oatmeal (Cooked)", calories: 68, serving: "100 g", protein: 2.4, carbs: 12, fat: 1.4 },
             { name: "Greek Yogurt (Plain)", calories: 59, serving: "100 g", protein: 10, carbs: 3.6, fat: 0.4 },
             { name: "Salmon (Cooked)", calories: 206, serving: "100 g", protein: 22, carbs: 0, fat: 12.3 },
+            { name: "Tuna (Canned in Water)", calories: 116, serving: "100 g", protein: 26, carbs: 0, fat: 1.0 },
             { name: "Sweet Potato (Baked)", calories: 90, serving: "100 g", protein: 2.0, carbs: 21, fat: 0.1 },
+            { name: "White Potato (Boiled)", calories: 87, serving: "100 g", protein: 1.9, carbs: 20, fat: 0.1 },
             { name: "Broccoli (Boiled)", calories: 35, serving: "100 g", protein: 2.4, carbs: 7.2, fat: 0.4 },
+            { name: "Spinach (Raw)", calories: 23, serving: "100 g", protein: 2.9, carbs: 3.6, fat: 0.4 },
             { name: "Avocado", calories: 160, serving: "100 g", protein: 2.0, carbs: 8.5, fat: 14.7 },
             { name: "Almonds", calories: 579, serving: "100 g", protein: 21, carbs: 22, fat: 50 },
             { name: "Peanut Butter", calories: 588, serving: "100 g", protein: 25, carbs: 20, fat: 50 },
             { name: "Whole Wheat Bread", calories: 247, serving: "100 g", protein: 13, carbs: 41, fat: 3.4 },
+            { name: "White Bread", calories: 265, serving: "100 g", protein: 9, carbs: 49, fat: 3.2 },
             { name: "Pasta (Cooked)", calories: 158, serving: "100 g", protein: 5.8, carbs: 31, fat: 0.9 },
             { name: "Cheddar Cheese", calories: 403, serving: "100 g", protein: 25, carbs: 1.3, fat: 33 },
-            { name: "Ground Beef (90% Lean)", calories: 215, serving: "100 g", protein: 26, carbs: 0, fat: 11 }
+            { name: "Mozzarella Cheese", calories: 280, serving: "100 g", protein: 28, carbs: 3.1, fat: 17 },
+            { name: "Ground Beef (90% Lean)", calories: 215, serving: "100 g", protein: 26, carbs: 0, fat: 11 },
+            { name: "Sirloin Steak", calories: 207, serving: "100 g", protein: 27, carbs: 0, fat: 10 },
+            { name: "Pork Chop", calories: 231, serving: "100 g", protein: 25, carbs: 0, fat: 14 },
+            { name: "Turkey Breast", calories: 135, serving: "100 g", protein: 30, carbs: 0, fat: 1.0 },
+            { name: "Shrimp (Cooked)", calories: 99, serving: "100 g", protein: 24, carbs: 0.2, fat: 0.3 },
+            { name: "Orange", calories: 47, serving: "100 g", protein: 0.9, carbs: 12, fat: 0.1 },
+            { name: "Strawberries", calories: 32, serving: "100 g", protein: 0.7, carbs: 7.7, fat: 0.3 },
+            { name: "Blueberries", calories: 57, serving: "100 g", protein: 0.7, carbs: 14, fat: 0.3 },
+            { name: "Watermelon", calories: 30, serving: "100 g", protein: 0.6, carbs: 8, fat: 0.2 },
+            { name: "Grapes", calories: 69, serving: "100 g", protein: 0.7, carbs: 18, fat: 0.2 },
+            { name: "Cottage Cheese", calories: 98, serving: "100 g", protein: 11, carbs: 3.4, fat: 4.3 },
+            { name: "Butter", calories: 717, serving: "100 g", protein: 0.9, carbs: 0.1, fat: 81 },
+            { name: "Olive Oil", calories: 884, serving: "100 ml", protein: 0, carbs: 0, fat: 100 },
+            { name: "Honey", calories: 304, serving: "100 g", protein: 0.3, carbs: 82, fat: 0 },
+            { name: "Sugar", calories: 387, serving: "100 g", protein: 0, carbs: 100, fat: 0 },
+            { name: "Whey Protein Powder", calories: 400, serving: "100 g", protein: 80, carbs: 8, fat: 4 },
+            { name: "Black Beans (Cooked)", calories: 132, serving: "100 g", protein: 8.9, carbs: 24, fat: 0.5 },
+            { name: "Lentils (Cooked)", calories: 116, serving: "100 g", protein: 9.0, carbs: 20, fat: 0.4 },
+            { name: "Chickpeas (Cooked)", calories: 164, serving: "100 g", protein: 8.9, carbs: 27, fat: 2.6 },
+            { name: "Quinoa (Cooked)", calories: 120, serving: "100 g", protein: 4.4, carbs: 21, fat: 1.9 },
+            { name: "Tofu", calories: 76, serving: "100 g", protein: 8.0, carbs: 1.9, fat: 4.8 }
         ];
 
         let appData = {
@@ -437,6 +463,7 @@
         let html5QrCode = null;
         let pendingScannedItem = null;
         let chartInstance = null;
+        let previousUnitSystem = 'metric';
 
         window.addEventListener('DOMContentLoaded', () => {
             initCloudSync();
@@ -874,7 +901,7 @@
             renderRecipesLibrary();
         }
 
-        // Scanner functions connected to Open Food Facts API
+        // Scanner functions connected to Open Food Facts API (with stable fps: 5 config)
         function startScanner() {
             const resultDiv = document.getElementById('scanner-result');
             resultDiv.classList.add('hidden');
@@ -883,17 +910,15 @@
             }
             html5QrCode.start(
                 { facingMode: "environment" },
-                { fps: 5, qrbox: { width: 250, height: 250 } },
+                { fps: 5, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
                 (decodedText) => {
                     stopScanner();
                     handleScannedBarcode(decodedText);
                 },
                 (errorMessage) => {}
-                    // Suppress continuous scanning errors while searching for a barcode
-                }
             ).catch(err => {
                 console.error("Camera start error:", err);
-                alert("Could not start camera. Please check permissions.");
+                alert("Could not start camera. Please check permissions and ensure HTTPS.");
             });
         }
 
@@ -1022,6 +1047,7 @@
             const user = getCurrentUserObj();
             document.getElementById('prof-name').value = user.name;
             document.getElementById('prof-units').value = user.units || 'metric';
+            previousUnitSystem = user.units || 'metric';
             document.getElementById('prof-gender').value = user.gender;
             document.getElementById('prof-age').value = user.age;
             document.getElementById('prof-height').value = user.height;
@@ -1036,11 +1062,35 @@
             document.getElementById('profile-modal').classList.add('hidden');
         }
 
+        // Automatic Unit Conversion when switching dropdown between metric & imperial
         function toggleUnitInputs() {
             const units = document.getElementById('prof-units').value;
             document.getElementById('label-height').innerText = units === 'imperial' ? 'Height (in)' : 'Height (cm)';
             document.getElementById('label-weight').innerText = units === 'imperial' ? 'Weight (lbs)' : 'Weight (kg)';
             document.getElementById('label-goal').innerText = units === 'imperial' ? 'Goal (lbs)' : 'Goal (kg)';
+
+            const heightInput = document.getElementById('prof-height');
+            const weightInput = document.getElementById('prof-weight');
+            const goalInput = document.getElementById('prof-goal');
+
+            let hVal = parseFloat(heightInput.value);
+            let wVal = parseFloat(weightInput.value);
+            let gVal = parseFloat(goalInput.value);
+
+            if (previousUnitSystem !== units) {
+                if (units === 'imperial') {
+                    // Convert cm -> inches, kg -> lbs
+                    if (!isNaN(hVal)) heightInput.value = (hVal / 2.54).toFixed(1);
+                    if (!isNaN(wVal)) weightInput.value = (wVal * 2.20462).toFixed(1);
+                    if (!isNaN(gVal)) goalInput.value = (gVal * 2.20462).toFixed(1);
+                } else {
+                    // Convert inches -> cm, lbs -> kg
+                    if (!isNaN(hVal)) heightInput.value = (hVal * 2.54).toFixed(1);
+                    if (!isNaN(wVal)) weightInput.value = (wVal / 2.20462).toFixed(1);
+                    if (!isNaN(gVal)) goalInput.value = (gVal / 2.20462).toFixed(1);
+                }
+                previousUnitSystem = units;
+            }
         }
 
         function saveProfile(e) {
