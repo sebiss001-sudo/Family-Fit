@@ -400,27 +400,13 @@
     </div>
 
     <script>
-        // Expanded food database with common items
         const PRESET_FOODS = [
             { name: "Apple", calories: 52, serving: "100 g", protein: 0.3, carbs: 14, fat: 0.2 },
             { name: "Banana", calories: 89, serving: "100 g", protein: 1.1, carbs: 23, fat: 0.3 },
-            { name: "Chicken Breast (Cooked)", calories: 165, serving: "100 g", protein: 31, carbs: 0, fat: 3.6 },
-            { name: "White Rice (Cooked)", calories: 130, serving: "100 g", protein: 2.7, carbs: 28, fat: 0.3 },
-            { name: "Brown Rice (Cooked)", calories: 123, serving: "100 g", protein: 2.6, carbs: 26, fat: 1.0 },
+            { name: "Chicken Breast", calories: 165, serving: "100 g", protein: 31, carbs: 0, fat: 3.6 },
+            { name: "White Rice", calories: 130, serving: "100 g", protein: 2.7, carbs: 28, fat: 0.3 },
             { name: "Whole Milk", calories: 61, serving: "100 ml", protein: 3.2, carbs: 4.8, fat: 3.3 },
-            { name: "Egg (Large)", calories: 72, serving: "50 g", protein: 6.3, carbs: 0.4, fat: 4.8 },
-            { name: "Oatmeal (Cooked)", calories: 68, serving: "100 g", protein: 2.4, carbs: 12, fat: 1.4 },
-            { name: "Greek Yogurt (Plain)", calories: 59, serving: "100 g", protein: 10, carbs: 3.6, fat: 0.4 },
-            { name: "Salmon (Cooked)", calories: 206, serving: "100 g", protein: 22, carbs: 0, fat: 12.3 },
-            { name: "Sweet Potato (Baked)", calories: 90, serving: "100 g", protein: 2.0, carbs: 21, fat: 0.1 },
-            { name: "Broccoli (Boiled)", calories: 35, serving: "100 g", protein: 2.4, carbs: 7.2, fat: 0.4 },
-            { name: "Avocado", calories: 160, serving: "100 g", protein: 2.0, carbs: 8.5, fat: 14.7 },
-            { name: "Almonds", calories: 579, serving: "100 g", protein: 21, carbs: 22, fat: 50 },
-            { name: "Peanut Butter", calories: 588, serving: "100 g", protein: 25, carbs: 20, fat: 50 },
-            { name: "Whole Wheat Bread", calories: 247, serving: "100 g", protein: 13, carbs: 41, fat: 3.4 },
-            { name: "Pasta (Cooked)", calories: 158, serving: "100 g", protein: 5.8, carbs: 31, fat: 0.9 },
-            { name: "Cheddar Cheese", calories: 403, serving: "100 g", protein: 25, carbs: 1.3, fat: 33 },
-            { name: "Ground Beef (90% Lean)", calories: 215, serving: "100 g", protein: 26, carbs: 0, fat: 11 }
+            { name: "Egg", calories: 72, serving: "50 g", protein: 6.3, carbs: 0.4, fat: 4.8 }
         ];
 
         let appData = {
@@ -526,6 +512,7 @@
             document.getElementById('dash-burned').innerText = burnedCals.toLocaleString();
             document.getElementById('dash-net').innerText = netRemaining.toLocaleString();
 
+            // Macros targets based on split (40% carbs, 30% protein, 30% fat)
             const targetCarbs = Math.round((targetCals * 0.4) / 4);
             const targetProtein = Math.round((targetCals * 0.3) / 4);
             const targetFat = Math.round((targetCals * 0.3) / 9);
@@ -539,11 +526,13 @@
             document.getElementById('macro-fat-text').innerText = `${Math.round(fatG)} / ${targetFat} g`;
             document.getElementById('macro-fat-bar').style.width = `${Math.min(100, (fatG / targetFat) * 100)}%`;
 
+            // Water tracker
             const waterTarget = 2500;
             document.getElementById('water-amount').innerText = log.water.toLocaleString();
             document.getElementById('water-liters').innerText = `(${(log.water / 1000).toFixed(1)} L)`;
             document.getElementById('water-bar').style.width = `${Math.min(100, (log.water / waterTarget) * 100)}%`;
 
+            // Meal summary list
             const mealsList = document.getElementById('dash-meals-list');
             const mealTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'];
             mealsList.innerHTML = '';
@@ -578,6 +567,7 @@
             renderDashboard();
         }
 
+        // Food log functions
         function searchFood() {
             const query = document.getElementById('food-search').value.toLowerCase();
             const resultsDiv = document.getElementById('food-search-results');
@@ -628,6 +618,7 @@
             saveToCloud();
             renderFoodLog();
             
+            // Reset form
             document.getElementById('food-name').value = '';
             document.getElementById('food-calories').value = '';
             document.getElementById('food-serving').value = '';
@@ -667,6 +658,7 @@
             renderFoodLog();
         }
 
+        // Exercise functions
         function autoFillExercise() {
             const val = document.getElementById('exercise-preset').value;
             const nameInput = document.getElementById('exercise-name');
@@ -725,6 +717,7 @@
             renderExerciseLog();
         }
 
+        // Recipes functions
         function searchRecipeIngredients() {
             const query = document.getElementById('recipe-ingredient-search').value.toLowerCase();
             const resultsDiv = document.getElementById('recipe-ingredient-results');
@@ -776,7 +769,7 @@
                 listDiv.innerHTML += `
                     <div class="flex justify-between items-center text-xs bg-white p-2 rounded border mb-1">
                         <span>${ing.name} (${ing.calories} kcal)</span>
-                        <button onclick="removeRecipeIngredient(${idx})" class="text-red-400 hover:text-red-600">X</button>
+                        <button onclick="removeRecipeIngredient(${idx})" class="text-red-400 hover:text-red-600"><i class="fa-solid xmark"></i>X</button>
                     </div>`;
             });
 
@@ -874,7 +867,7 @@
             renderRecipesLibrary();
         }
 
-        // Scanner functions connected to Open Food Facts API
+        // Scanner functions
         function startScanner() {
             const resultDiv = document.getElementById('scanner-result');
             resultDiv.classList.add('hidden');
@@ -902,40 +895,23 @@
         }
 
         function handleScannedBarcode(code) {
-            const apiUrl = `https://world.openfoodfacts.org/api/v0/product/${code}.json`;
+            // Mock lookup for demo scanner items
+            pendingScannedItem = {
+                name: `Scanned Product (${code.slice(-4)})`,
+                calories: 220,
+                serving: '1 package (150g)',
+                protein: '8.5',
+                carbs: '28.0',
+                fat: '7.2'
+            };
 
-            fetch(apiUrl)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 1) {
-                        const product = data.product;
-                        const nutriments = product.nutriments || {};
-
-                        pendingScannedItem = {
-                            name: product.product_name || `Product (${code})`,
-                            calories: Math.round(nutriments['energy-kcal_100g'] || nutriments['energy-kcal'] || 0),
-                            serving: product.serving_size || '100g / 100ml',
-                            protein: (nutriments['proteins_100g'] || 0).toFixed(1),
-                            carbs: (nutriments['carbohydrates_100g'] || 0).toFixed(1),
-                            fat: (nutriments['fat_100g'] || 0).toFixed(1)
-                        };
-
-                        document.getElementById('scan-item-title').innerText = pendingScannedItem.name;
-                        document.getElementById('scan-item-details').innerHTML = `
-                            <div>Calories: <strong>${pendingScannedItem.calories} kcal</strong></div>
-                            <div>Serving: ${pendingScannedItem.serving}</div>
-                            <div>Macros (per 100g): P: ${pendingScannedItem.protein}g | C: ${pendingScannedItem.carbs}g | F: ${pendingScannedItem.fat}g</div>
-                        `;
-                        document.getElementById('scanner-result').classList.remove('hidden');
-                    } else {
-                        alert("Product not found in Open Food Facts database. You can add it manually!");
-                        stopScanner();
-                    }
-                })
-                .catch(err => {
-                    console.error("API Error:", err);
-                    alert("Failed to lookup barcode. Please check your internet connection.");
-                });
+            document.getElementById('scan-item-title').innerText = pendingScannedItem.name;
+            document.getElementById('scan-item-details').innerHTML = `
+                <div>Calories: <strong>${pendingScannedItem.calories} kcal</strong></div>
+                <div>Serving: ${pendingScannedItem.serving}</div>
+                <div>Macros: P: ${pendingScannedItem.protein}g | C: ${pendingScannedItem.carbs}g | F: ${pendingScannedItem.fat}g</div>
+            `;
+            document.getElementById('scanner-result').classList.remove('hidden');
         }
 
         function logScannedItem() {
@@ -950,6 +926,7 @@
             switchTab('dashboard');
         }
 
+        // Progress & Weight functions
         function initChart() {
             const ctx = document.getElementById('weightChart').getContext('2d');
             chartInstance = new Chart(ctx, {
@@ -982,6 +959,7 @@
             let labels = [];
             let dataPoints = [];
 
+            // Gather past 7 days logs
             for (let i = 6; i >= 0; i--) {
                 let d = new Date();
                 d.setDate(d.getDate() - i);
@@ -1016,6 +994,7 @@
             updateProgressChart();
         }
 
+        // Profile Modal functions
         function openProfileModal() {
             const user = getCurrentUserObj();
             document.getElementById('prof-name').value = user.name;
