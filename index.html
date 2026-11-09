@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <script>try{var t=localStorage.getItem("ff_theme");if(t==="dark"||(!t&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.classList.add("dark")}catch(e){}</script>
 <link rel="manifest" href="manifest.json">
 <title>FamilyFit - Family Nutrition Tracker</title>
@@ -36,7 +36,8 @@ main>section{animation:fadeIn .25s ease}
 .logo{display:inline-flex;width:2rem;height:2rem;align-items:center;justify-content:center;border-radius:.7rem;margin-right:.5rem;font-size:.95rem;color:#fff;
   background:linear-gradient(135deg,#10b981,#3b82f6);box-shadow:0 6px 14px -6px #2563eb99}
 .active-tab,.active-tab:hover{background:#eff6ff;color:#2563eb;font-weight:600}
-.mob-nav{background:#ffffffee;backdrop-filter:blur(12px);border-radius:1.25rem 1.25rem 0 0;box-shadow:0 -8px 24px -12px #0f172a40;padding-bottom:max(.625rem,env(safe-area-inset-bottom))}
+.mob-nav{background:#ffffffee;backdrop-filter:blur(12px);border-radius:1.25rem 1.25rem 0 0;box-shadow:0 -8px 24px -12px #0f172a40;padding-bottom:calc(env(safe-area-inset-bottom,0px) + .9rem)}
+.mob-nav button{min-height:3.6rem;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .mob-active-tab{color:#2563eb!important;font-weight:700;background:#eff6ff;border-radius:.9rem}
 .hero{display:flex;align-items:center;gap:1.5rem;padding:1.5rem;border-radius:1.25rem;color:#fff;background:linear-gradient(135deg,#2563eb,#10b981);box-shadow:0 18px 36px -18px #2563ebb3}
 .ring-wrap{position:relative;width:9rem;height:9rem;flex:none}
@@ -53,7 +54,7 @@ main>section{animation:fadeIn .25s ease}
 .modal{position:fixed;inset:0;background:#0f172a73;backdrop-filter:blur(3px);z-index:60;display:flex;align-items:center;justify-content:center;padding:1rem}
 .modal.hidden{display:none}
 #reader,#recipe-reader{width:100%;min-height:220px;background:#0f172a;border-radius:.75rem}
-#toast{position:fixed;left:50%;bottom:5.5rem;transform:translate(-50%,16px);background:#0f172a;color:#fff;padding:.7rem 1.1rem;border-radius:.9rem;font-size:.85rem;
+#toast{position:fixed;left:50%;bottom:8rem;transform:translate(-50%,16px);background:#0f172a;color:#fff;padding:.7rem 1.1rem;border-radius:.9rem;font-size:.85rem;
   opacity:0;pointer-events:none;transition:.25s;z-index:200;max-width:90vw;box-shadow:0 12px 28px -10px #0f172a99}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 @media(min-width:768px){#toast{bottom:1.5rem}}
@@ -93,7 +94,7 @@ html.dark #toast{background:#e2e8f0;color:#0f172a}
 html.dark .sm.bg-slate-100,html.dark .sm.bg-slate-200{color:#e2e8f0}
 </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen font-sans pb-24 md:pb-6">
+<body class="bg-slate-50 text-slate-800 min-h-screen font-sans pb-32 md:pb-6">
 
 <!-- Sign-in gate -->
 <div id="auth" class="modal" style="z-index:100;background:#f8fafc">
@@ -119,7 +120,7 @@ html.dark .sm.bg-slate-100,html.dark .sm.bg-slate-200{color:#e2e8f0}
   </div>
   <nav id="desk-nav" class="max-w-6xl mx-auto px-4 hidden md:flex space-x-1 pb-2 text-sm text-slate-500"></nav>
 </header>
-<nav id="mob-nav" class="mob-nav fixed bottom-0 left-0 right-0 z-50 md:hidden flex justify-around py-2.5 text-slate-500"></nav>
+<nav id="mob-nav" class="mob-nav fixed bottom-0 left-0 right-0 z-50 md:hidden flex gap-1 px-2 pt-2 text-slate-500"></nav>
 
 <main class="max-w-6xl mx-auto px-4 py-6">
 <!-- DASHBOARD -->
@@ -135,6 +136,7 @@ html.dark .sm.bg-slate-100,html.dark .sm.bg-slate-200{color:#e2e8f0}
       <div><span>Burned</span><b id="dash-burned">0</b></div>
     </div>
   </div>
+  <p id="floor-note" class="hidden text-xs text-amber-600 px-1">⚠ Your target is held at the safe minimum (1,200 kcal for women, 1,500 for men). Choose a gentler weekly goal.</p>
   <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 flex flex-col md:flex-row justify-between items-center gap-4">
     <div><h3 class="font-bold text-blue-900 text-sm"><i class="fa-solid fa-chart-line mr-2"></i>Last 7 Days Summary</h3><p class="text-xs text-slate-600">Daily average over days with food logged.</p></div>
     <div class="flex gap-4 text-center">
@@ -194,6 +196,7 @@ html.dark .sm.bg-slate-100,html.dark .sm.bg-slate-200{color:#e2e8f0}
       </div>
       <p class="text-[11px] text-slate-400">Picking an online food scales the values to the amount you eat.</p>
       <button onclick="logFoodItem()" class="btn bg-blue-600 hover:bg-blue-700">Add to Log</button>
+      <button onclick="saveFoodFromForm()" class="btn bg-slate-600 hover:bg-slate-700"><i class="fa-solid fa-bookmark mr-1"></i>Save as My Food (reuse later)</button>
     </div>
     <div class="md:col-span-2 card space-y-3"><h3 class="h3">Today's Logged Items</h3><div id="food-log-items" class="space-y-3"></div></div>
   </div>
@@ -240,6 +243,20 @@ html.dark .sm.bg-slate-100,html.dark .sm.bg-slate-200{color:#e2e8f0}
         <label class="text-xs text-slate-500">Log as <select id="recipe-meal" class="border rounded p-1 text-xs"><option>Breakfast</option><option selected>Lunch</option><option>Dinner</option><option>Snacks</option></select></label></div>
       <div id="recipes-library-list" class="grid md:grid-cols-2 gap-4"></div>
     </div>
+  </div>
+<div class="grid md:grid-cols-3 gap-6">
+    <div class="card space-y-3">
+      <h3 class="h3">Create Custom Food</h3>
+      <div><label class="lbl">Food name</label><input id="cf-name" class="inp" placeholder="Protein bar, Grandma's soup..."></div>
+      <div><label class="lbl">Serving size (what the numbers are for)</label><input id="cf-serving" class="inp" placeholder="1 bar, 250 ml, 100 g..."></div>
+      <div><label class="lbl">Calories (kcal)</label><input type="number" min="0" id="cf-cal" class="inp"></div>
+      <div class="grid grid-cols-3 gap-2">
+        <div><label class="lbl">Protein (g)</label><input type="number" min="0" step="0.1" id="cf-p" class="inp"></div>
+        <div><label class="lbl">Carbs (g)</label><input type="number" min="0" step="0.1" id="cf-c" class="inp"></div>
+        <div><label class="lbl">Fat (g)</label><input type="number" min="0" step="0.1" id="cf-f" class="inp"></div></div>
+      <button onclick="saveCustomFood()" class="btn bg-emerald-600 hover:bg-emerald-700">Save Custom Food</button>
+    </div>
+    <div class="md:col-span-2 card space-y-3"><h3 class="h3">My Custom Foods</h3><div id="custom-foods-list" class="grid md:grid-cols-2 gap-4"></div></div>
   </div>
 </section>
 
@@ -306,9 +323,22 @@ html.dark .sm.bg-slate-100,html.dark .sm.bg-slate-200{color:#e2e8f0}
       <div><label class="lbl">Age</label><input type="number" min="1" id="prof-age" required class="inp"></div></div>
     <div class="grid grid-cols-3 gap-3">
       <div><label class="lbl" id="label-height">Height (cm)</label><input type="number" min="1" step="0.1" id="prof-height" required class="inp"></div>
-      <div><label class="lbl" id="label-weight">Weight (kg)</label><input type="number" min="1" step="0.1" id="prof-weight" required class="inp"></div>
-      <div><label class="lbl" id="label-goal">Goal (kg)</label><input type="number" min="1" step="0.1" id="prof-goal" required class="inp"></div></div>
+      <div><label class="lbl" id="label-weight">Weight (kg)</label><input type="number" min="1" step="0.1" id="prof-weight" oninput="paceHint()" required class="inp"></div>
+      <div><label class="lbl" id="label-goal">Goal (kg)</label><input type="number" min="1" step="0.1" id="prof-goal" oninput="paceHint()" required class="inp"></div></div>
     <div><label class="lbl">Activity Level</label><select id="prof-activity" class="inp"><option value="1.2">Sedentary</option><option value="1.375">Lightly Active</option><option value="1.55">Moderately Active</option><option value="1.725">Very Active</option></select></div>
+    <div><label class="lbl">Weekly goal</label>
+      <select id="prof-pace" onchange="paceChanged()" class="inp">
+        <option value="0">Maintain my weight</option>
+        <option value="-250">Lose ~0.25 kg (0.5 lb) per week: -250 kcal/day</option>
+        <option value="-500">Lose ~0.5 kg (1 lb) per week: -500 kcal/day</option>
+        <option value="-750">Lose ~0.75 kg (1.5 lb) per week: -750 kcal/day</option>
+        <option value="-1000">Lose ~1 kg (2 lb) per week: -1000 kcal/day (aggressive)</option>
+        <option value="250">Gain ~0.25 kg (0.5 lb) per week: +250 kcal/day</option>
+        <option value="500">Gain ~0.5 kg (1 lb) per week: +500 kcal/day</option>
+        <option value="custom">Custom (kcal per day)...</option>
+      </select>
+      <input type="number" step="10" id="prof-custom" oninput="paceHint()" class="inp mt-2 hidden" placeholder="kcal per day, e.g. -300 (negative = lose weight)">
+      <p id="pace-hint" class="text-[11px] text-slate-400 mt-1"></p></div>
     <div class="pt-2 flex justify-between items-center">
       <div class="space-x-3"><button type="button" onclick="createNewProfile()" class="text-xs text-blue-600 font-semibold">+ Add member</button>
       <button type="button" id="del-prof" onclick="deleteProfile()" class="text-xs text-red-500 hover:text-red-600 font-semibold"><i class="fa-solid fa-trash mr-1"></i>Delete profile</button></div>
@@ -365,7 +395,7 @@ function dateKey(d = new Date()) { const p = n => String(n).padStart(2, '0'); re
 const daysAgo = n => { const d = new Date(); d.setDate(d.getDate() - n); return dateKey(d); };
 
 /* ---------- state ---------- */
-let S = { users: [], recipes: [], favorites: [] };
+let S = { users: [], recipes: [], favorites: [], customFoods: [] };
 let logs = {}, cur = localStorage.getItem('ff_user'), tab = 'dashboard';
 let unsubs = [], chart = null, ingredients = [], bases = { food: null, ing: null };
 let usdaKey = '', usdaWarned = false;
@@ -379,7 +409,7 @@ function getLog(d = dateKey()) {
   return logs[k];
 }
 const saveLog = l => db.collection('family_logs').doc(lk(l.user, l.date)).set(l).catch(e => alert('Save failed: ' + e.message));
-const saveProfiles = () => db.collection('family_data').doc('profiles').set({ users: S.users, recipes: S.recipes, favorites: S.favorites }).catch(e => alert('Save failed: ' + e.message));
+const saveProfiles = () => db.collection('family_data').doc('profiles').set({ users: S.users, recipes: S.recipes, favorites: S.favorites, customFoods: S.customFoods }).catch(e => alert('Save failed: ' + e.message));
 
 /* ---------- auth + sync ---------- */
 function authHelp(e) {
@@ -420,7 +450,7 @@ function startSync() {
   unsubs.push(db.collection('family_data').doc('profiles').onSnapshot(doc => {
     if (!doc.exists) return initProfiles();
     const d = doc.data();
-    S = { users: d.users || [], recipes: d.recipes || [], favorites: d.favorites || [] };
+    S = { users: d.users || [], recipes: d.recipes || [], favorites: d.favorites || [], customFoods: d.customFoods || [] };
     S.users.forEach(u => { if (!u.units) u.units = 'metric'; });
     if (!S.users.find(u => u.id === cur)) cur = S.users[0]?.id;
     localStorage.setItem('ff_user', cur);
@@ -461,7 +491,7 @@ async function initProfiles() {
 const TABS = [['dashboard','chart-pie','Dashboard','Home'],['food','utensils','Food Log','Food'],['recipes','book-open','Recipes','Recipes'],
   ['scanner','barcode','Scanner','Scan'],['exercise','person-running','Exercise','Activity'],['progress','chart-line','Progress','Progress']];
 $('desk-nav').innerHTML = TABS.map(t => `<button onclick="switchTab('${t[0]}')" id="tab-${t[0]}" class="py-2 px-3 rounded-xl flex items-center space-x-2 hover:bg-slate-100 transition"><i class="fa-solid fa-${t[1]}"></i><span>${t[2]}</span></button>`).join('');
-$('mob-nav').innerHTML = TABS.map(t => `<button onclick="switchTab('${t[0]}')" id="mob-tab-${t[0]}" class="flex flex-col items-center space-y-1 px-3 py-1 transition"><i class="fa-solid fa-${t[1]} text-lg"></i><span class="text-[10px] font-medium">${t[3]}</span></button>`).join('');
+$('mob-nav').innerHTML = TABS.map(t => `<button onclick="switchTab('${t[0]}')" id="mob-tab-${t[0]}" class="flex-1 flex flex-col items-center justify-center space-y-1 py-2 transition"><i class="fa-solid fa-${t[1]} text-xl"></i><span class="text-[11px] font-medium">${t[3]}</span></button>`).join('');
 
 function switchTab(t) {
   tab = t;
@@ -478,19 +508,22 @@ function renderAll() {
   if (!S.users.length) return;
   const sel = $('userSelect');
   sel.innerHTML = S.users.map(u => `<option value="${esc(u.id)}" ${u.id === cur ? 'selected' : ''}>${esc(u.name)}</option>`).join('');
-  ({ dashboard: renderDashboard, food: () => { renderFoodLog(); renderFavorites(); }, recipes: () => { renderRecipes(); renderIngredients(); calcRecipe(); },
+  ({ dashboard: renderDashboard, food: () => { renderFoodLog(); renderFavorites(); }, recipes: () => { renderRecipes(); renderCustomFoods(); renderIngredients(); calcRecipe(); },
      exercise: renderExercise, progress: renderProgress, scanner() {} })[tab]();
 }
 function switchUser() { cur = $('userSelect').value; localStorage.setItem('ff_user', cur); renderAll(); }
 
 /* ---------- calculations ---------- */
-function targetCalories(u) {
+function targetInfo(u) {
   const kg = u.units === 'imperial' ? u.weight * 0.453592 : u.weight, cm = u.units === 'imperial' ? u.height * 2.54 : u.height;
   const bmr = 10 * kg + 6.25 * cm - 5 * u.age + (u.gender === 'male' ? 5 : -161);
   const tdee = bmr * parseFloat(u.activity), floor = u.gender === 'male' ? 1500 : 1200;
-  const adj = u.goal < u.weight ? -400 : u.goal > u.weight ? 300 : 0;
-  return Math.max(floor, Math.round(tdee + adj));
+  let adj = u.adjust ?? (u.goal < u.weight ? -400 : u.goal > u.weight ? 300 : 0);   // older profiles keep their old behaviour
+  if ((adj < 0 && u.weight <= u.goal) || (adj > 0 && u.weight >= u.goal)) adj = 0;   // goal reached: maintain
+  const raw = Math.round(tdee + adj);
+  return { target: Math.max(floor, raw), floored: raw < floor, adj };
 }
+const targetCalories = u => targetInfo(u).target;
 const sum = (arr, k) => arr.reduce((s, x) => s + Number(x[k] || 0), 0);
 
 /* ---------- dashboard ---------- */
@@ -503,6 +536,7 @@ function macroBar(label, val, target, color) {
 const MEAL_ICON = { Breakfast: 'fa-mug-hot text-amber-500', Lunch: 'fa-bowl-food text-emerald-500', Dinner: 'fa-moon text-indigo-500', Snacks: 'fa-cookie-bite text-rose-400' };
 function renderDashboard() {
   const u = user(), log = getLog(), target = targetCalories(u);
+  $('floor-note').classList.toggle('hidden', !targetInfo(u).floored);
   const eaten = sum(log.foods, 'calories'), burned = sum(log.exercises, 'calories');
   $('dash-budget').innerText = target.toLocaleString();
   $('dash-consumed').innerText = Math.round(eaten).toLocaleString();
@@ -667,11 +701,11 @@ function searchFood() {
   clearTimeout(searchTimer);
   if (!q) return box.classList.add('hidden');
   const seq = ++searchSeq;
-  const recipes = S.recipes.filter(r => r.title.toLowerCase().includes(q));
+  const recipes = [...S.recipes, ...(S.customFoods || []).map(f => ({ title: f.name, calories: f.calories, protein: f.protein, carbs: f.carbs, fat: f.fat }))].filter(r => r.title.toLowerCase().includes(q));
   searchItems = recipes.map(r => ({ recipe: r }));
   const draw = online => {
     let h = '', i = 0;
-    if (recipes.length) h += '<div class="bg-blue-50 px-3 py-1 text-[11px] font-bold text-blue-800 uppercase">My Recipes</div>' + recipes.map(r =>
+    if (recipes.length) h += '<div class="bg-blue-50 px-3 py-1 text-[11px] font-bold text-blue-800 uppercase">My Recipes & Foods</div>' + recipes.map(r =>
       `<div class="p-2.5 hover:bg-slate-50 cursor-pointer text-xs flex justify-between" onclick="pickSearch(${i++})"><span class="font-bold text-blue-700">${esc(r.title)}</span><span class="text-blue-600 font-bold">${esc(r.calories)} kcal/serv</span></div>`).join('');
     h += `<div class="bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-600 uppercase">Online Food Database${online && online.length ? ' (' + online[0].src + ')' : ''}</div>`;
     h += online === null ? '<div class="p-3 text-xs text-slate-400">Searching... (the food database can take a few seconds)</div>' : online === false ? '<div class="p-3 text-xs text-slate-400">The food database is slow or unavailable. Keep typing to retry, or enter the values yourself.</div>'
@@ -769,6 +803,36 @@ function logRecipe(i) {
   l.foods.push({ mealType: $('recipe-meal').value, name: r.title, calories: r.calories, serving: '1 serving', protein: r.protein, carbs: r.carbs, fat: r.fat });
   saveLog(l); switchTab('dashboard');
 }
+function saveCustomFood() {
+  const name = $('cf-name').value.trim(), cal = $('cf-cal').value;
+  if (!name || cal === '') return alert('Enter a name and the calories.');
+  S.customFoods.push({ name, serving: $('cf-serving').value.trim() || '1 serving', calories: num(cal), protein: num($('cf-p').value), carbs: num($('cf-c').value), fat: num($('cf-f').value) });
+  ['name', 'serving', 'cal', 'p', 'c', 'f'].forEach(k => $('cf-' + k).value = '');
+  saveProfiles(); renderAll(); alert('Custom food saved.');
+}
+function saveFoodFromForm() {   // from the Food Log form
+  const name = $('food-name').value.trim(), cal = $('food-calories').value, g = $('food-grams').value;
+  if (!name || cal === '') return alert('Enter a name and calories first.');
+  S.customFoods.push({ name, serving: g ? g + ' g' : '1 serving', calories: num(cal), protein: num($('food-protein').value), carbs: num($('food-carbs').value), fat: num($('food-fat').value) });
+  saveProfiles(); alert('Saved to My Foods. Search for it any time.');
+}
+function renderCustomFoods() {
+  $('custom-foods-list').innerHTML = S.customFoods.length ? S.customFoods.map((f, i) => `
+    <div class="bg-slate-50 border p-4 rounded-xl space-y-2"><div class="flex justify-between items-start"><h4 class="font-bold">${esc(f.name)}</h4>
+    <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">${esc(f.calories)} kcal</span></div>
+    <div class="text-xs text-slate-500">per ${esc(f.serving)} | P: ${esc(f.protein)}g | C: ${esc(f.carbs)}g | F: ${esc(f.fat)}g</div>
+    <div class="pt-2 flex items-center space-x-2"><input type="number" id="cf-qty-${i}" value="1" min="0.25" step="0.25" class="inp !w-16 !py-1 !text-xs" title="Number of servings">
+    <button onclick="logCustomFood(${i})" class="sm bg-blue-600 text-white">Log</button>
+    <button onclick="deleteCustomFood(${i})" class="text-red-400 text-xs px-2"><i class="fa-solid fa-trash"></i></button></div></div>`).join('')
+    : '<p class="text-xs text-slate-400">No custom foods yet. Create one, or use "Save as My Food" in the Food Log.</p>';
+}
+function logCustomFood(i) {
+  const f = S.customFoods[i], q = num($('cf-qty-' + i).value) || 1, l = getLog();
+  l.foods.push({ mealType: $('recipe-meal').value, name: f.name, calories: Math.round(f.calories * q), serving: q === 1 ? f.serving : `${q} x ${f.serving}`,
+    protein: r1(f.protein * q), carbs: r1(f.carbs * q), fat: r1(f.fat * q) });
+  saveLog(l); switchTab('dashboard');
+}
+function deleteCustomFood(i) { if (confirm('Delete this custom food?')) { S.customFoods.splice(i, 1); saveProfiles(); renderAll(); } }
 function deleteRecipe(i) { if (confirm('Delete this recipe?')) { S.recipes.splice(i, 1); saveProfiles(); renderAll(); } }
 function openEditRecipe(i) {
   const r = S.recipes[i];
@@ -893,9 +957,22 @@ function openProfileModal() {
   $('prof-name').value = u.name; $('prof-units').value = prevUnits = u.units || 'metric'; $('prof-gender').value = u.gender; $('prof-age').value = u.age;
   $('prof-height').value = u.height; $('prof-weight').value = u.weight; $('prof-goal').value = u.goal; $('prof-activity').value = u.activity;
   Object.keys(CONV).forEach(id => { delete $(id).dataset.metric; delete $(id).dataset.shown; });
+  const adj = u.adjust ?? (u.goal < u.weight ? -400 : u.goal > u.weight ? 300 : 0);
+  $('prof-pace').value = [...$('prof-pace').options].some(o => o.value === String(adj)) ? String(adj) : 'custom';
+  $('prof-custom').value = adj; paceChanged();
   $('del-prof').classList.toggle('hidden', S.users.length < 2);
   $('usda-key').value = usdaKey;
   setUnitLabels(); $('profile-modal').classList.remove('hidden');
+}
+const paceValue = () => $('prof-pace').value === 'custom' ? Number($('prof-custom').value) || 0 : Number($('prof-pace').value);
+function paceChanged() { $('prof-custom').classList.toggle('hidden', $('prof-pace').value !== 'custom'); paceHint(); }
+function paceHint() {   // 1 kg of body fat is roughly 7,700 kcal (3,500 kcal per lb)
+  const a = paceValue(), imp = $('prof-units').value === 'imperial', f = imp ? 0.453592 : 1;
+  const w = Number($('prof-weight').value) * f, g = Number($('prof-goal').value) * f, perWeek = Math.abs(a) * 7 / 7700;
+  let t = a === 0 ? 'You will eat at maintenance (your estimated daily burn).' :
+    `About ${imp ? r1(perWeek / 0.453592) + ' lb' : r1(perWeek) + ' kg'} per week (${a > 0 ? '+' : ''}${a} kcal/day).`;
+  if (a && w && g) t += ((a < 0 && w > g) || (a > 0 && w < g)) ? ` Roughly ${Math.ceil(Math.abs(w - g) / perWeek)} weeks to reach your goal weight.` : ' Your goal weight is already reached or in the other direction, so no adjustment is applied.';
+  $('pace-hint').textContent = t + ' (Estimate: about 7,700 kcal = 1 kg of body fat.)';
 }
 function closeProfileModal() { $('profile-modal').classList.add('hidden'); }
 function setUnitLabels() {
@@ -916,12 +993,12 @@ function toggleUnitInputs() {   // converts the existing numbers when the unit s
     });
     prevUnits = now;
   }
-  setUnitLabels();
+  setUnitLabels(); paceHint();
 }
 function saveProfile(e) {
   e.preventDefault(); const u = user();
   Object.assign(u, { name: $('prof-name').value.trim(), units: $('prof-units').value, gender: $('prof-gender').value, age: Number($('prof-age').value),
-    height: Number($('prof-height').value), weight: Number($('prof-weight').value), goal: Number($('prof-goal').value), activity: $('prof-activity').value });
+    height: Number($('prof-height').value), weight: Number($('prof-weight').value), goal: Number($('prof-goal').value), activity: $('prof-activity').value, adjust: Math.max(-1500, Math.min(1000, paceValue())) });
   saveProfiles(); closeProfileModal(); renderAll();
 }
 function createNewProfile() {
@@ -961,7 +1038,7 @@ async function importBackup(e) {
     const d = JSON.parse(await f.text());
     if (d.version !== 2 || !Array.isArray(d.profiles?.users) || !d.profiles.users.length || typeof d.logs !== 'object') throw new Error('Not a valid FamilyFit backup file.');
     if (!confirm('Import this backup? It replaces your profiles, recipes and favorites, and overwrites logs for the same days.')) return;
-    await db.collection('family_data').doc('profiles').set({ users: d.profiles.users, recipes: d.profiles.recipes || [], favorites: d.profiles.favorites || [] });
+    await db.collection('family_data').doc('profiles').set({ users: d.profiles.users, recipes: d.profiles.recipes || [], favorites: d.profiles.favorites || [], customFoods: d.profiles.customFoods || [] });
     const entries = Object.entries(d.logs).filter(([k, v]) => /^.+_\d{4}-\d{2}-\d{2}$/.test(k) && v && Array.isArray(v.foods));
     for (let i = 0; i < entries.length; i += 400) {
       const b = db.batch(); entries.slice(i, i + 400).forEach(([k, v]) => b.set(db.collection('family_logs').doc(k), v)); await b.commit();
