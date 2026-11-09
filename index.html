@@ -136,6 +136,7 @@ html.dark .sm.bg-slate-100,html.dark .sm.bg-slate-200{color:#e2e8f0}
       <div><span>Burned</span><b id="dash-burned">0</b></div>
     </div>
   </div>
+  <p id="target-note" class="text-xs text-slate-500 px-1"></p>
   <p id="floor-note" class="hidden text-xs text-amber-600 px-1">⚠ Your target is held at the safe minimum (1,200 kcal for women, 1,500 for men). Choose a gentler weekly goal.</p>
   <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 flex flex-col md:flex-row justify-between items-center gap-4">
     <div><h3 class="font-bold text-blue-900 text-sm"><i class="fa-solid fa-chart-line mr-2"></i>Last 7 Days Summary</h3><p class="text-xs text-slate-600">Daily average over days with food logged.</p></div>
@@ -518,10 +519,10 @@ function targetInfo(u) {
   const kg = u.units === 'imperial' ? u.weight * 0.453592 : u.weight, cm = u.units === 'imperial' ? u.height * 2.54 : u.height;
   const bmr = 10 * kg + 6.25 * cm - 5 * u.age + (u.gender === 'male' ? 5 : -161);
   const tdee = bmr * parseFloat(u.activity), floor = u.gender === 'male' ? 1500 : 1200;
-  let adj = u.adjust ?? (u.goal < u.weight ? -400 : u.goal > u.weight ? 300 : 0);   // older profiles keep their old behaviour
-  if ((adj < 0 && u.weight <= u.goal) || (adj > 0 && u.weight >= u.goal)) adj = 0;   // goal reached: maintain
+  const want = u.adjust ?? (u.goal < u.weight ? -400 : u.goal > u.weight ? 300 : 0);   // older profiles keep their old behaviour
+  const adj = ((want < 0 && u.weight <= u.goal) || (want > 0 && u.weight >= u.goal)) ? 0 : want;   // goal reached: maintain
   const raw = Math.round(tdee + adj);
-  return { target: Math.max(floor, raw), floored: raw < floor, adj };
+  return { target: Math.max(floor, raw), floored: raw < floor, adj, want, tdee: Math.round(tdee) };
 }
 const targetCalories = u => targetInfo(u).target;
 const sum = (arr, k) => arr.reduce((s, x) => s + Number(x[k] || 0), 0);
@@ -536,7 +537,9 @@ function macroBar(label, val, target, color) {
 const MEAL_ICON = { Breakfast: 'fa-mug-hot text-amber-500', Lunch: 'fa-bowl-food text-emerald-500', Dinner: 'fa-moon text-indigo-500', Snacks: 'fa-cookie-bite text-rose-400' };
 function renderDashboard() {
   const u = user(), log = getLog(), target = targetCalories(u);
-  $('floor-note').classList.toggle('hidden', !targetInfo(u).floored);
+  const ti = targetInfo(u);
+  $('floor-note').classList.toggle('hidden', !ti.floored);
+  $('target-note').textContent = `Daily burn about ${ti.tdee.toLocaleString()} kcal` + (ti.adj ? ` ${ti.adj < 0 ? '-' : '+'} ${Math.abs(ti.adj)} (weekly goal)` : ti.want ? ' (no adjustment: your goal weight is already reached, or it is in the other direction from your weekly goal)' : ' (maintenance)') + ` = target ${target.toLocaleString()} kcal`;
   const eaten = sum(log.foods, 'calories'), burned = sum(log.exercises, 'calories');
   $('dash-budget').innerText = target.toLocaleString();
   $('dash-consumed').innerText = Math.round(eaten).toLocaleString();
