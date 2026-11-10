@@ -57,6 +57,8 @@ main>section{animation:fadeIn .25s ease}
 #toast{position:fixed;left:50%;bottom:8rem;transform:translate(-50%,16px);background:#0f172a;color:#fff;padding:.7rem 1.1rem;border-radius:.9rem;font-size:.85rem;
   opacity:0;pointer-events:none;transition:.25s;z-index:200;max-width:90vw;box-shadow:0 12px 28px -10px #0f172a99}
 #toast.show{opacity:1;transform:translate(-50%,0)}
+#toast.act{pointer-events:auto}
+.undo{margin-left:.7rem;font-weight:700;text-decoration:underline;color:#93c5fd}
 @media(min-width:768px){#toast{bottom:1.5rem}}
 /* ---------- dark mode ---------- */
 html.dark{color-scheme:dark}
@@ -91,6 +93,7 @@ html.dark .mob-nav{background:#0f172aee}
 html.dark .active-tab,html.dark .active-tab:hover,html.dark .mob-active-tab{background:#16264a;color:#93c5fd!important}
 html.dark #auth{background:#0b1220!important}
 html.dark #toast{background:#e2e8f0;color:#0f172a}
+html.dark .undo{color:#1d4ed8}
 html.dark .sm.bg-slate-100,html.dark .sm.bg-slate-200{color:#e2e8f0}
 </style>
 </head>
@@ -123,6 +126,13 @@ html.dark .sm.bg-slate-100,html.dark .sm.bg-slate-200{color:#e2e8f0}
 <nav id="mob-nav" class="mob-nav fixed bottom-0 left-0 right-0 z-50 md:hidden flex gap-1 px-2 pt-2 text-slate-500"></nav>
 
 <main class="max-w-6xl mx-auto px-4 py-6">
+<div id="datebar" class="flex items-center justify-center gap-2 mb-5">
+  <button onclick="shiftView(-1)" class="sm bg-white border" title="Previous day"><i class="fa-solid fa-chevron-left"></i></button>
+  <label class="relative cursor-pointer"><span id="date-label" class="card !py-2 !px-4 font-semibold text-sm inline-block"></span>
+    <input type="date" id="date-pick" onchange="setView(this.value)" onclick="try{this.showPicker()}catch(e){}" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer"></label>
+  <button id="date-next" onclick="shiftView(1)" class="sm bg-white border" title="Next day"><i class="fa-solid fa-chevron-right"></i></button>
+  <button id="date-today" onclick="setView(dateKey())" class="sm bg-blue-50 text-blue-700 border border-blue-200 hidden">Today</button>
+</div>
 <!-- DASHBOARD -->
 <section id="view-dashboard" class="space-y-6">
   <div class="hero">
@@ -147,12 +157,12 @@ html.dark .sm.bg-slate-100,html.dark .sm.bg-slate-200{color:#e2e8f0}
   </div>
   <div class="grid md:grid-cols-3 gap-6">
     <div class="md:col-span-2 card">
-      <h3 class="font-bold mb-4 flex justify-between"><span>Daily Macronutrients (g)</span><span class="text-xs text-slate-400 font-normal">Target: 40/30/30 split</span></h3>
+      <h3 class="font-bold mb-4 flex justify-between"><span>Daily Macronutrients (g)</span><span id="macro-split" class="text-xs text-slate-400 font-normal"></span></h3>
       <div id="macros" class="space-y-4"></div>
     </div>
     <div class="card flex flex-col justify-between">
       <div>
-        <div class="flex justify-between items-center mb-2"><h3 class="font-bold"><i class="fa-solid fa-droplet text-blue-500 mr-2"></i>Water</h3><span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Target: 2,500 ml</span></div>
+        <div class="flex justify-between items-center mb-2"><h3 class="font-bold"><i class="fa-solid fa-droplet text-blue-500 mr-2"></i>Water</h3><span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full" id="water-target">Target: 2,500 ml</span></div>
         <div class="text-center my-4"><span id="water-amount" class="text-4xl font-extrabold text-blue-600">0</span><span class="text-slate-500 font-semibold"> ml</span><div id="water-liters" class="text-xs text-slate-400">(0.0 L)</div></div>
         <div class="w-full bg-slate-100 rounded-full h-2.5 mb-4 overflow-hidden"><div id="water-bar" class="bg-blue-500 h-full" style="width:0%"></div></div>
       </div>
@@ -165,8 +175,8 @@ html.dark .sm.bg-slate-100,html.dark .sm.bg-slate-200{color:#e2e8f0}
     </div>
   </div>
   <div class="card space-y-4">
-    <div class="flex justify-between items-center"><h3 class="font-bold">Today's Meal Summary</h3>
-      <button onclick="copyYesterdayMeals()" class="sm bg-slate-100 hover:bg-slate-200 border"><i class="fa-solid fa-copy text-blue-600 mr-1"></i>Repeat Yesterday's Meals</button></div>
+    <div class="flex justify-between items-center"><h3 id="meals-title" class="font-bold">Today's Meal Summary</h3>
+      <button onclick="copyYesterdayMeals()" class="sm bg-slate-100 hover:bg-slate-200 border"><i class="fa-solid fa-copy text-blue-600 mr-1"></i>Copy Previous Day's Meals</button></div>
     <div id="dash-meals-list" class="divide-y divide-slate-100"></div>
   </div>
 </section>
@@ -176,6 +186,8 @@ html.dark .sm.bg-slate-100,html.dark .sm.bg-slate-200{color:#e2e8f0}
   <div class="card space-y-2">
     <h4 class="font-bold text-xs text-slate-500 uppercase"><i class="fa-solid fa-star text-amber-400 mr-1"></i>Favorites (1-click add, uses the meal type below)</h4>
     <div id="favs" class="flex flex-wrap gap-2"></div>
+    <h4 class="font-bold text-xs text-slate-500 uppercase pt-2"><i class="fa-solid fa-clock-rotate-left mr-1"></i>Recent foods</h4>
+    <div id="recent-foods" class="flex flex-wrap gap-2"></div>
   </div>
   <div class="grid md:grid-cols-3 gap-6">
     <div class="card space-y-3">
@@ -199,7 +211,7 @@ html.dark .sm.bg-slate-100,html.dark .sm.bg-slate-200{color:#e2e8f0}
       <button onclick="logFoodItem()" class="btn bg-blue-600 hover:bg-blue-700">Add to Log</button>
       <button onclick="saveFoodFromForm()" class="btn bg-slate-600 hover:bg-slate-700"><i class="fa-solid fa-bookmark mr-1"></i>Save as My Food (reuse later)</button>
     </div>
-    <div class="md:col-span-2 card space-y-3"><h3 class="h3">Today's Logged Items</h3><div id="food-log-items" class="space-y-3"></div></div>
+    <div class="md:col-span-2 card space-y-3"><h3 class="h3">Logged Items</h3><div id="food-log-items" class="space-y-3"></div></div>
   </div>
 </section>
 
@@ -255,7 +267,7 @@ html.dark .sm.bg-slate-100,html.dark .sm.bg-slate-200{color:#e2e8f0}
         <div><label class="lbl">Protein (g)</label><input type="number" min="0" step="0.1" id="cf-p" class="inp"></div>
         <div><label class="lbl">Carbs (g)</label><input type="number" min="0" step="0.1" id="cf-c" class="inp"></div>
         <div><label class="lbl">Fat (g)</label><input type="number" min="0" step="0.1" id="cf-f" class="inp"></div></div>
-      <button onclick="saveCustomFood()" class="btn bg-emerald-600 hover:bg-emerald-700">Save Custom Food</button>
+      <button id="cf-btn" onclick="saveCustomFood()" class="btn bg-emerald-600 hover:bg-emerald-700">Save Custom Food</button>
     </div>
     <div class="md:col-span-2 card space-y-3"><h3 class="h3">My Custom Foods</h3><div id="custom-foods-list" class="grid md:grid-cols-2 gap-4"></div></div>
   </div>
@@ -294,23 +306,53 @@ html.dark .sm.bg-slate-100,html.dark .sm.bg-slate-200{color:#e2e8f0}
       <div><label class="lbl">Calories Burned</label><input type="number" min="0" id="exercise-calories" class="inp"></div>
       <button onclick="logExercise()" class="btn bg-emerald-600 hover:bg-emerald-700">Add Exercise</button>
     </div>
-    <div class="md:col-span-2 card space-y-3"><h3 class="h3">Today's Exercises</h3><div id="exercise-log-items" class="space-y-3"></div></div>
+    <div class="md:col-span-2 card space-y-3"><h3 class="h3">Exercises</h3><div id="exercise-log-items" class="space-y-3"></div></div>
   </div>
 </section>
 
 <!-- PROGRESS -->
-<section id="view-progress" class="hidden">
+<section id="view-progress" class="hidden space-y-6">
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <div class="flex gap-2" id="range-btns"></div>
+    <button onclick="exportCSV()" class="sm bg-white border"><i class="fa-solid fa-file-csv mr-1"></i>Export CSV</button>
+  </div>
+  <div id="prog-stats" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
   <div class="grid md:grid-cols-3 gap-6">
     <div class="card space-y-3">
-      <h3 class="h3">Log Weight</h3>
-      <div><label class="lbl">Today's Weight (<span id="unit-label-weight">kg</span>)</label><input type="number" min="0" step="0.1" id="log-weight-input" class="inp" placeholder="70.5"></div>
+      <h3 class="h3">Log Today's Weight</h3>
+      <div><label class="lbl">Weight (<span id="unit-label-weight">kg</span>)</label><input type="number" min="0" step="0.1" id="log-weight-input" class="inp" placeholder="70.5"></div>
       <button onclick="saveWeight()" class="btn bg-blue-600 hover:bg-blue-700">Record Weight</button>
+      <p id="weight-rate" class="text-xs text-slate-500"></p>
     </div>
-    <div class="md:col-span-2 card space-y-3"><h3 id="weight-history-title" class="h3">Weight History (30 days)</h3><div class="relative w-full h-72"><canvas id="weightChart"></canvas></div></div>
+    <div class="md:col-span-2 card space-y-3"><h3 id="weight-history-title" class="h3">Weight</h3><div class="relative w-full h-72"><canvas id="weightChart"></canvas></div></div>
   </div>
+  <div class="card space-y-3"><h3 class="h3">Calories eaten vs target</h3><div class="relative w-full h-64"><canvas id="calChart"></canvas></div></div>
+  <div class="card space-y-3"><h3 class="h3">Macros (grams per day)</h3><div class="relative w-full h-64"><canvas id="macroChart"></canvas></div></div>
 </section>
 </main>
 
+<div id="edit-food-modal" class="modal hidden"><div class="card max-w-md w-full space-y-3">
+  <div class="flex justify-between items-center border-b pb-2"><h3 class="font-bold text-lg">Edit Logged Food</h3><button onclick="$('edit-food-modal').classList.add('hidden')" class="text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button></div>
+  <input type="hidden" id="ef-idx">
+  <div><label class="lbl">Name</label><input id="ef-name" class="inp"></div>
+  <div class="grid grid-cols-2 gap-3">
+    <div><label class="lbl">Meal</label><select id="ef-meal" class="inp"><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snacks</option></select></div>
+    <div><label class="lbl">Amount (text)</label><input id="ef-serving" class="inp" placeholder="150 g"></div></div>
+  <div class="grid grid-cols-4 gap-2">
+    <div><label class="lbl">kcal</label><input type="number" min="0" id="ef-cal" class="inp"></div>
+    <div><label class="lbl">Prot</label><input type="number" min="0" step="0.1" id="ef-p" class="inp"></div>
+    <div><label class="lbl">Carbs</label><input type="number" min="0" step="0.1" id="ef-c" class="inp"></div>
+    <div><label class="lbl">Fat</label><input type="number" min="0" step="0.1" id="ef-f" class="inp"></div></div>
+  <div><label class="lbl">Portion multiplier (1 = unchanged, 0.5 = half, 2 = double)</label><input type="number" min="0.05" step="any" id="ef-mult" value="1" class="inp"></div>
+  <div class="flex justify-end space-x-2"><button onclick="$('edit-food-modal').classList.add('hidden')" class="sm text-slate-600">Cancel</button><button onclick="saveEditedFood()" class="sm bg-blue-600 text-white">Save</button></div>
+</div></div>
+<div id="copy-modal" class="modal hidden"><div class="card max-w-sm w-full space-y-3">
+  <div class="flex justify-between items-center border-b pb-2"><h3 class="font-bold text-lg">Copy meal</h3><button onclick="$('copy-modal').classList.add('hidden')" class="text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button></div>
+  <input type="hidden" id="cp-from">
+  <div><label class="lbl">Copy to meal</label><select id="cp-meal" class="inp"><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snacks</option></select></div>
+  <div><label class="lbl">On date</label><input type="date" id="cp-date" class="inp"></div>
+  <div class="flex justify-end space-x-2"><button onclick="$('copy-modal').classList.add('hidden')" class="sm text-slate-600">Cancel</button><button onclick="doCopy()" class="sm bg-blue-600 text-white">Copy</button></div>
+</div></div>
 <div id="toast"></div>
 
 <!-- PROFILE MODAL -->
@@ -340,6 +382,12 @@ html.dark .sm.bg-slate-100,html.dark .sm.bg-slate-200{color:#e2e8f0}
       </select>
       <input type="number" step="10" id="prof-custom" oninput="paceTouched = true; paceHint()" class="inp mt-2 hidden" placeholder="kcal per day, e.g. -300 (negative = lose weight)">
       <p id="pace-hint" class="text-[11px] text-slate-400 mt-1"></p></div>
+    <div><label class="lbl">Daily macro split (carbs / protein / fat, % of calories)</label>
+      <select id="prof-macros" onchange="macroChanged()" class="inp">
+        <option value="40,30,30">Balanced: 40 / 30 / 30</option><option value="30,40,30">High protein: 30 / 40 / 30</option>
+        <option value="25,35,40">Lower carb: 25 / 35 / 40</option><option value="50,20,30">Higher carb: 50 / 20 / 30</option><option value="custom">Custom...</option></select>
+      <div id="mc-row" class="grid grid-cols-3 gap-2 mt-2 hidden"><input type="number" min="0" max="100" id="mc-c" class="inp" placeholder="Carbs %"><input type="number" min="0" max="100" id="mc-p" class="inp" placeholder="Protein %"><input type="number" min="0" max="100" id="mc-f" class="inp" placeholder="Fat %"></div></div>
+    <div><label class="lbl">Daily water goal (ml)</label><input type="number" min="0" step="50" id="prof-water" class="inp" placeholder="2500"></div>
     <div class="pt-2 flex justify-between items-center">
       <div class="space-x-3"><button type="button" onclick="createNewProfile()" class="text-xs text-blue-600 font-semibold">+ Add member</button>
       <button type="button" id="del-prof" onclick="deleteProfile()" class="text-xs text-red-500 hover:text-red-600 font-semibold"><i class="fa-solid fa-trash mr-1"></i>Delete profile</button></div>
@@ -389,10 +437,14 @@ db.enablePersistence({ synchronizeTabs: true }).catch(e => console.debug('Offlin
 
 /* ---------- helpers ---------- */
 const $ = id => document.getElementById(id);
-window.alert = msg => {   // friendly pop-up message instead of the browser's alert box
-  const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h);
-  t._h = setTimeout(() => t.classList.remove('show'), Math.min(8000, 2500 + String(msg).length * 45));
-};
+let toastTimer;
+function showToast(msg, undo) {   // friendly pop-up message (with an optional Undo button) instead of the browser's alert box
+  const t = $('toast'); t.textContent = msg; t.classList.toggle('act', !!undo);
+  if (undo) { const b = document.createElement('button'); b.textContent = 'Undo'; b.className = 'undo'; b.onclick = () => { undo(); t.classList.remove('show'); }; t.append(b); }
+  t.classList.add('show'); clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), undo ? 6000 : Math.min(8000, 2500 + String(msg).length * 45));
+}
+window.alert = msg => showToast(msg);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num = v => Math.max(0, Number(v) || 0);
 const r1 = n => Math.round(n * 10) / 10;
@@ -401,14 +453,14 @@ const daysAgo = n => { const d = new Date(); d.setDate(d.getDate() - n); return 
 
 /* ---------- state ---------- */
 let S = { users: [], recipes: [], favorites: [], customFoods: [] };
-let logs = {}, cur = localStorage.getItem('ff_user'), tab = 'dashboard';
+let logs = {}, cur = localStorage.getItem('ff_user'), tab = 'dashboard', viewDate = dateKey();
 let unsubs = [], chart = null, ingredients = [], bases = { food: null, ing: null };
 let usdaKey = '', usdaWarned = false;
 let pendingScan = null, searchItems = [], searchSeq = 0, searchTimer = null, qr = null, rqr = null, prevUnits = 'metric';
 
 const user = () => S.users.find(u => u.id === cur) || S.users[0];
 const lk = (uid, d) => `${uid}_${d}`;
-function getLog(d = dateKey()) {
+function getLog(d = viewDate) {
   const u = user().id, k = lk(u, d);
   if (!logs[k]) logs[k] = { user: u, date: d, foods: [], exercises: [], water: 0, weight: null };
   return logs[k];
@@ -462,7 +514,7 @@ function startSync() {
     renderAll();
   }, denied));
   unsubs.push(db.collection('family_data').doc('settings').onSnapshot(d => { usdaKey = (d.exists && d.data().usdaKey) || ''; }, () => {}));
-  unsubs.push(db.collection('family_logs').where('date', '>=', daysAgo(35)).onSnapshot(snap => {
+  unsubs.push(db.collection('family_logs').where('date', '>=', daysAgo(370)).onSnapshot(snap => {
     logs = {}; snap.forEach(d => logs[d.id] = d.data());
     if (S.users.length) renderAll();
   }, denied));
@@ -511,10 +563,26 @@ function switchTab(t) {
 }
 function renderAll() {
   if (!S.users.length) return;
+  renderDateBar();
   const sel = $('userSelect');
   sel.innerHTML = S.users.map(u => `<option value="${esc(u.id)}" ${u.id === cur ? 'selected' : ''}>${esc(u.name)}</option>`).join('');
-  ({ dashboard: renderDashboard, food: () => { renderFoodLog(); renderFavorites(); }, recipes: () => { renderRecipes(); renderCustomFoods(); renderIngredients(); calcRecipe(); },
+  ({ dashboard: renderDashboard, food: () => { renderFoodLog(); renderFavorites(); renderRecent(); }, recipes: () => { renderRecipes(); renderCustomFoods(); renderIngredients(); calcRecipe(); },
      exercise: renderExercise, progress: renderProgress, scanner() {} })[tab]();
+}
+function shiftDate(d, n) { const [y, m, dd] = d.split('-').map(Number); return dateKey(new Date(y, m - 1, dd + n)); }
+function dateLabel(d) {
+  const t = dateKey(); if (d === t) return 'Today'; if (d === shiftDate(t, -1)) return 'Yesterday';
+  const [y, m, dd] = d.split('-').map(Number);
+  return new Date(y, m - 1, dd).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: y === new Date().getFullYear() ? undefined : 'numeric' });
+}
+function setView(v) { if (!v) return; const t = dateKey(); viewDate = v > t ? t : v; renderAll(); }
+function shiftView(n) { setView(shiftDate(viewDate, n)); }
+function renderDateBar() {
+  const t = dateKey(), pick = $('date-pick');
+  $('datebar').classList.toggle('hidden', tab === 'progress');
+  $('date-label').textContent = dateLabel(viewDate); pick.value = viewDate; pick.max = t; pick.min = daysAgo(370);
+  $('date-next').disabled = viewDate >= t; $('date-next').style.opacity = viewDate >= t ? .4 : 1;
+  $('date-today').classList.toggle('hidden', viewDate === t);
 }
 function switchUser() { cur = $('userSelect').value; localStorage.setItem('ff_user', cur); renderAll(); }
 
@@ -541,7 +609,9 @@ function macroBar(label, val, target, color) {
 const MEAL_ICON = { Breakfast: 'fa-mug-hot text-amber-500', Lunch: 'fa-bowl-food text-emerald-500', Dinner: 'fa-moon text-indigo-500', Snacks: 'fa-cookie-bite text-rose-400' };
 function renderDashboard() {
   const u = user(), log = getLog(), target = targetCalories(u);
-  const ti = targetInfo(u);
+  const ti = targetInfo(u), mp = u.macros || { c: 40, p: 30, f: 30 };
+  $('meals-title').textContent = viewDate === dateKey() ? "Today's Meal Summary" : 'Meals: ' + dateLabel(viewDate);
+  $('macro-split').textContent = `Target: ${mp.c}/${mp.p}/${mp.f} split (carbs/protein/fat)`;
   $('floor-note').classList.toggle('hidden', !ti.floored);
   $('target-note').textContent = `Daily burn about ${ti.tdee.toLocaleString()} kcal` + (ti.adj ? ` ${ti.adj < 0 ? '-' : '+'} ${Math.abs(ti.adj)} (weekly goal)` : ti.want ? ' (no adjustment: your goal weight is already reached, or it is in the other direction from your weekly goal)' : ' (maintenance)') + ` = target ${target.toLocaleString()} kcal`;
   const eaten = sum(log.foods, 'calories'), burned = sum(log.exercises, 'calories');
@@ -553,12 +623,13 @@ function renderDashboard() {
   $('ring-label').innerText = net < 0 ? 'kcal over' : 'kcal left';
   $('ring-fg').style.strokeDashoffset = 326.7 * (1 - Math.min(1, budget > 0 ? eaten / budget : 0));
   $('ring-fg').style.stroke = net < 0 ? '#fecaca' : '#fff';
-  $('macros').innerHTML = macroBar('Carbohydrates', sum(log.foods, 'carbs'), Math.round(target * .4 / 4), 'bg-blue-500')
-    + macroBar('Protein', sum(log.foods, 'protein'), Math.round(target * .3 / 4), 'bg-emerald-500')
-    + macroBar('Fats', sum(log.foods, 'fat'), Math.round(target * .3 / 9), 'bg-amber-500');
+  $('macros').innerHTML = macroBar('Carbohydrates', sum(log.foods, 'carbs'), Math.round(target * mp.c / 400), 'bg-blue-500')
+    + macroBar('Protein', sum(log.foods, 'protein'), Math.round(target * mp.p / 400), 'bg-emerald-500')
+    + macroBar('Fats', sum(log.foods, 'fat'), Math.round(target * mp.f / 900), 'bg-amber-500');
   const w = log.water || 0;
   $('water-amount').innerText = w.toLocaleString(); $('water-liters').innerText = `(${(w / 1000).toFixed(1)} L)`;
-  $('water-bar').style.width = Math.min(100, w / 25) + '%';
+  const wg = u.waterGoal || 2500; $('water-target').textContent = 'Target: ' + wg.toLocaleString() + ' ml';
+  $('water-bar').style.width = Math.min(100, w / wg * 100) + '%';
 
   let days = 0, c = 0, b = 0;
   for (let i = 0; i < 7; i++) {
@@ -574,22 +645,60 @@ function renderDashboard() {
       if (f.mealType !== type) return;
       cals += Number(f.calories);
       items += `<div class="flex justify-between items-center text-xs text-slate-600 pl-4 py-1 border-l-2 border-blue-200"><span>${esc(f.name)} <span class="text-slate-400">(${esc(f.serving || '1 serv')})</span></span>
-        <div class="flex items-center space-x-3"><span class="font-semibold">${esc(f.calories)} kcal</span><button onclick="removeFood(${i})" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash text-[10px]"></i></button></div></div>`;
+        <div class="flex items-center space-x-3"><span class="font-semibold">${esc(f.calories)} kcal</span><button onclick="openEditFood(${i})" class="text-slate-400 hover:text-blue-600 p-1" title="Edit"><i class="fa-solid fa-pen text-[10px]"></i></button><button onclick="removeFood(${i})" class="text-red-400 hover:text-red-600 p-1"><i class="fa-solid fa-trash text-[10px]"></i></button></div></div>`;
     });
-    return `<div class="py-3 space-y-2"><div class="flex justify-between text-sm font-bold"><span><i class="fa-solid ${MEAL_ICON[type]} mr-2 text-xs"></i>${type}</span><span class="text-blue-600">${Math.round(cals)} kcal</span></div>
+    return `<div class="py-3 space-y-2"><div class="flex justify-between text-sm font-bold"><span><i class="fa-solid ${MEAL_ICON[type]} mr-2 text-xs"></i>${type}</span><span class="text-blue-600">${Math.round(cals)} kcal${cals ? ` <button onclick="openCopy('${type}')" class="text-slate-400 hover:text-blue-600 ml-2" title="Copy this meal"><i class="fa-regular fa-copy"></i></button>` : ''}</span></div>
       ${items || '<div class="text-[11px] text-slate-400 pl-4">No items logged</div>'}</div>`;
   }).join('');
 }
 function addWater(ml) { const l = getLog(); l.water = Math.max(0, (l.water || 0) + ml); saveLog(l); renderAll(); }
 function copyYesterdayMeals() {
-  const y = logs[lk(user().id, daysAgo(1))];
-  if (!y || !y.foods.length) return alert('No meals found for yesterday!');
+  const y = logs[lk(user().id, shiftDate(viewDate, -1))];
+  if (!y || !y.foods.length) return alert('No meals found for the previous day!');
   const l = getLog();
   if (l.copiedYesterday && !confirm("You already copied yesterday's meals today. Copy again?")) return;
   l.foods.push(...JSON.parse(JSON.stringify(y.foods))); l.copiedYesterday = true;
   saveLog(l); renderAll();
 }
-function removeFood(i) { const l = getLog(); l.foods.splice(i, 1); saveLog(l); renderAll(); }
+function removeFood(i) {
+  const l = getLog(), [f] = l.foods.splice(i, 1), d = l.date; saveLog(l); renderAll();
+  showToast('Food removed.', () => { const l2 = getLog(d); l2.foods.splice(i, 0, f); saveLog(l2); renderAll(); });
+}
+function openEditFood(i) {
+  const f = getLog().foods[i];
+  $('ef-idx').value = i; $('ef-name').value = f.name; $('ef-meal').value = f.mealType; $('ef-serving').value = f.serving || '';
+  $('ef-cal').value = f.calories; $('ef-p').value = f.protein; $('ef-c').value = f.carbs; $('ef-f').value = f.fat; $('ef-mult').value = 1;
+  $('edit-food-modal').classList.remove('hidden');
+}
+function saveEditedFood() {
+  const i = Number($('ef-idx').value), l = getLog(), old = l.foods[i], m = Number($('ef-mult').value) > 0 ? Number($('ef-mult').value) : 1, sv = $('ef-serving').value.trim();
+  l.foods[i] = { ...old, name: $('ef-name').value.trim() || old.name, mealType: $('ef-meal').value,
+    serving: m !== 1 && sv === (old.serving || '') ? `${r1(m)} x ${sv || '1 serving'}` : sv,
+    calories: Math.round(num($('ef-cal').value) * m), protein: r1(num($('ef-p').value) * m), carbs: r1(num($('ef-c').value) * m), fat: r1(num($('ef-f').value) * m) };
+  saveLog(l); $('edit-food-modal').classList.add('hidden'); renderAll();
+}
+function openCopy(type) {
+  $('cp-from').value = type; $('cp-meal').value = type; $('cp-date').value = viewDate; $('cp-date').max = dateKey();
+  $('copy-modal').classList.remove('hidden');
+}
+function doCopy() {
+  const from = $('cp-from').value, to = $('cp-meal').value, d = $('cp-date').value || viewDate;
+  const items = getLog().foods.filter(f => f.mealType === from).map(f => ({ ...JSON.parse(JSON.stringify(f)), mealType: to }));
+  if (!items.length) return alert('Nothing to copy.');
+  const l = getLog(d > dateKey() ? dateKey() : d); l.foods.push(...items); saveLog(l);
+  $('copy-modal').classList.add('hidden'); alert(`Copied ${items.length} item(s) to ${to} on ${dateLabel(l.date)}.`); renderAll();
+}
+let recentList = [];
+function renderRecent() {
+  const uid = user().id, seen = new Map();
+  outer: for (const k of Object.keys(logs).filter(k => k.startsWith(uid + '_')).sort().reverse())
+    for (const f of [...logs[k].foods].reverse()) { if (!seen.has(f.name)) seen.set(f.name, f); if (seen.size >= 12) break outer; }
+  recentList = [...seen.values()];
+  $('recent-foods').innerHTML = recentList.length ? recentList.map((f, i) =>
+    `<button onclick="logRecent(${i})" class="bg-slate-100 hover:bg-slate-200 border text-xs font-semibold px-3 py-1.5 rounded-lg">${esc(f.name)} (${esc(f.calories)} kcal)</button>`).join('')
+    : '<span class="text-xs text-slate-400 italic">Foods you log will show up here.</span>';
+}
+function logRecent(i) { const l = getLog(), f = recentList[i]; l.foods.push({ ...f, mealType: $('food-meal-type').value }); saveLog(l); renderAll(); }
 
 /* ---------- favorites & food log ---------- */
 function toggleFavorite(i) {
@@ -614,7 +723,7 @@ function renderFoodLog() {
       <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold mr-2">${esc(f.mealType)}</span><strong>${esc(f.name)}</strong> <span class="text-xs text-slate-400">(${esc(f.serving || '1 serving')})</span>
       <div class="text-xs text-slate-500 mt-0.5">P: ${esc(f.protein)}g | C: ${esc(f.carbs)}g | F: ${esc(f.fat)}g</div></div>
       <div class="flex items-center space-x-3"><button onclick="toggleFavorite(${i})" class="${favs.has(f.name) ? 'text-amber-500' : 'text-slate-300 hover:text-amber-400'}"><i class="fa-solid fa-star"></i></button>
-      <span class="font-extrabold text-blue-600">${esc(f.calories)} kcal</span><button onclick="removeFood(${i})" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button></div></div>`).join('')
+      <span class="font-extrabold text-blue-600">${esc(f.calories)} kcal</span><button onclick="openEditFood(${i})" class="text-slate-400 hover:text-blue-600" title="Edit"><i class="fa-solid fa-pen"></i></button><button onclick="removeFood(${i})" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button></div></div>`).join('')
     : '<p class="text-xs text-slate-400">No items logged today yet.</p>';
 }
 function logFoodItem() {
@@ -841,7 +950,8 @@ function logRecipe(i) {
 function saveCustomFood() {
   const name = $('cf-name').value.trim(), cal = $('cf-cal').value;
   if (!name || cal === '') return alert('Enter a name and the calories.');
-  S.customFoods.push({ name, serving: $('cf-serving').value.trim() || '1 serving', calories: num(cal), protein: num($('cf-p').value), carbs: num($('cf-c').value), fat: num($('cf-f').value) });
+  const item = { name, serving: $('cf-serving').value.trim() || '1 serving', calories: num(cal), protein: num($('cf-p').value), carbs: num($('cf-c').value), fat: num($('cf-f').value) };
+  if (editingCF !== null) { S.customFoods[editingCF] = item; editingCF = null; $('cf-btn').textContent = 'Save Custom Food'; } else S.customFoods.push(item);
   ['name', 'serving', 'cal', 'p', 'c', 'f'].forEach(k => $('cf-' + k).value = '');
   saveProfiles(); renderAll(); alert('Custom food saved.');
 }
@@ -858,6 +968,7 @@ function renderCustomFoods() {
     <div class="text-xs text-slate-500">per ${esc(f.serving)} | P: ${esc(f.protein)}g | C: ${esc(f.carbs)}g | F: ${esc(f.fat)}g</div>
     <div class="pt-2 flex items-center space-x-2"><input type="number" id="cf-qty-${i}" value="1" min="0.25" step="0.25" class="inp !w-16 !py-1 !text-xs" title="Number of servings">
     <button onclick="logCustomFood(${i})" class="sm bg-blue-600 text-white">Log</button>
+    <button onclick="editCustomFood(${i})" class="sm bg-slate-200" title="Edit"><i class="fa-solid fa-pen"></i></button>
     <button onclick="deleteCustomFood(${i})" class="text-red-400 text-xs px-2"><i class="fa-solid fa-trash"></i></button></div></div>`).join('')
     : '<p class="text-xs text-slate-400">No custom foods yet. Create one, or use "Save as My Food" in the Food Log.</p>';
 }
@@ -867,8 +978,20 @@ function logCustomFood(i) {
     protein: r1(f.protein * q), carbs: r1(f.carbs * q), fat: r1(f.fat * q) });
   saveLog(l); switchTab('dashboard');
 }
-function deleteCustomFood(i) { if (confirm('Delete this custom food?')) { S.customFoods.splice(i, 1); saveProfiles(); renderAll(); } }
-function deleteRecipe(i) { if (confirm('Delete this recipe?')) { S.recipes.splice(i, 1); saveProfiles(); renderAll(); } }
+function deleteCustomFood(i) {
+  const [f] = S.customFoods.splice(i, 1); saveProfiles(); renderAll();
+  showToast('Custom food deleted.', () => { S.customFoods.splice(i, 0, f); saveProfiles(); renderAll(); });
+}
+let editingCF = null;
+function editCustomFood(i) {
+  const f = S.customFoods[i]; editingCF = i;
+  $('cf-name').value = f.name; $('cf-serving').value = f.serving; $('cf-cal').value = f.calories; $('cf-p').value = f.protein; $('cf-c').value = f.carbs; $('cf-f').value = f.fat;
+  $('cf-btn').textContent = 'Update Custom Food'; $('cf-name').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function deleteRecipe(i) {
+  const [r] = S.recipes.splice(i, 1); saveProfiles(); renderAll();
+  showToast('Recipe deleted.', () => { S.recipes.splice(i, 0, r); saveProfiles(); renderAll(); });
+}
 function openEditRecipe(i) {
   const r = S.recipes[i];
   $('er-idx').value = i; $('er-title').value = r.title; $('er-servings').value = r.servings || 1; $('er-cal').value = r.calories;
@@ -963,26 +1086,71 @@ function renderExercise() {
     <button onclick="removeExercise(${i})" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button></div></div>`).join('')
     : '<p class="text-xs text-slate-400">No exercise logged today yet.</p>';
 }
-function removeExercise(i) { const l = getLog(); l.exercises.splice(i, 1); saveLog(l); renderAll(); }
+function removeExercise(i) {
+  const l = getLog(), [e] = l.exercises.splice(i, 1), d = l.date; saveLog(l); renderAll();
+  showToast('Exercise removed.', () => { const l2 = getLog(d); l2.exercises.splice(i, 0, e); saveLog(l2); renderAll(); });
+}
 
 /* ---------- progress (weights stored in kg, shown in the profile's units) ---------- */
+let progRange = 30, charts = {};
+function mkChart(id, cfg) { if (charts[id]) charts[id].destroy(); charts[id] = new Chart($(id), cfg); }
 function renderProgress() {
-  const u = user(), imp = u.units === 'imperial', unit = imp ? 'lbs' : 'kg';
-  $('unit-label-weight').innerText = unit; $('weight-history-title').innerText = `Weight History, 30 days (${unit})`;
-  const labels = [], data = [];
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    const l = logs[lk(u.id, dateKey(d))];
+  const u = user(), imp = u.units === 'imperial', unit = imp ? 'lbs' : 'kg', n = progRange, target = targetCalories(u), W = imp ? 1 / 0.453592 : 1;
+  $('unit-label-weight').innerText = unit; $('weight-history-title').innerText = `Weight, last ${n} days (${unit})`;
+  $('range-btns').innerHTML = [7, 30, 90].map(r => `<button onclick="progRange=${r};renderProgress()" class="sm border ${r === n ? 'bg-blue-600 text-white' : 'bg-white'}">${r} days</button>`).join('');
+  const labels = [], wData = [], eaten = [], P = [], C = [], F = []; let logged = 0, sumCal = 0, onTarget = 0;
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i); const l = logs[lk(u.id, dateKey(d))], has = l && l.foods.length;
     labels.push(d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
-    data.push(l && l.weight ? r1(imp ? l.weight / 0.453592 : l.weight) : null);
+    wData.push(l && l.weight ? r1(l.weight * W) : null);
+    const cal = has ? Math.round(sum(l.foods, 'calories')) : null;
+    eaten.push(cal); P.push(has ? r1(sum(l.foods, 'protein')) : null); C.push(has ? r1(sum(l.foods, 'carbs')) : null); F.push(has ? r1(sum(l.foods, 'fat')) : null);
+    if (has) { logged++; sumCal += cal; if (Math.abs(cal - target) <= target * 0.1) onTarget++; }
   }
-  if (!chart) chart = new Chart($('weightChart'), { type: 'line', data: { labels, datasets: [{ label: 'Weight', data, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,.1)', fill: true, tension: .2, spanGaps: true }] },
-    options: { responsive: true, maintainAspectRatio: false } });
-  else { chart.data.labels = labels; chart.data.datasets[0].data = data; chart.update(); }
+  let streak = 0;
+  for (let i = 0; i < 400; i++) { const l = logs[lk(u.id, daysAgo(i))]; if (l && l.foods.length) streak++; else if (i > 0) break; }
+  const tile = (icon, label, val, sub) => `<div class="card text-center"><i class="fa-solid ${icon} text-blue-500"></i><div class="text-xs font-semibold text-slate-400 uppercase mt-1">${label}</div><div class="text-2xl font-extrabold">${val}</div><div class="text-[11px] text-slate-400">${sub}</div></div>`;
+  $('prog-stats').innerHTML = tile('fa-fire', 'Streak', streak, 'days in a row logged') + tile('fa-utensils', 'Avg eaten', logged ? Math.round(sumCal / logged).toLocaleString() : '-', `kcal/day, target ${target.toLocaleString()}`)
+    + tile('fa-bullseye', 'On target', logged ? `${onTarget}/${logged}` : '-', 'days within 10% of target') + tile('fa-calendar-check', 'Days logged', `${logged}/${n}`, `last ${n} days`);
+  // weight rate and estimated date to goal, from the last 60 days of weigh-ins
+  const pts = []; for (let i = 59; i >= 0; i--) { const l = logs[lk(u.id, daysAgo(i))]; if (l && l.weight) pts.push([59 - i, l.weight * W]); }
+  let rt = 'Log your weight at least twice, a week or more apart, to see your rate and an estimated date to reach your goal.';
+  if (pts.length >= 2 && pts[pts.length - 1][0] - pts[0][0] >= 7) {
+    const a = pts[0], b = pts[pts.length - 1], rate = (b[1] - a[1]) / ((b[0] - a[0]) / 7), left = u.goal - b[1];
+    rt = `Rate: ${rate > 0 ? '+' : ''}${r1(rate)} ${unit}/week.`;
+    if (Math.abs(left) < 0.2) rt += ' You are at your goal weight.';
+    else if (rate !== 0 && Math.sign(left) === Math.sign(rate)) { const wk = Math.abs(left / rate), eta = new Date(); eta.setDate(eta.getDate() + Math.round(wk * 7)); rt += ` About ${Math.ceil(wk)} weeks to your goal (around ${eta.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}).`; }
+    else rt += ' At this pace you are not moving toward your goal.';
+  }
+  $('weight-rate').textContent = rt;
+  const opt = (extra = {}) => ({ responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { maxTicksLimit: 8 }, ...(extra.x || {}) }, y: { ...(extra.y || {}) } } });
+  mkChart('weightChart', { type: 'line', data: { labels, datasets: [
+    { label: `Weight (${unit})`, data: wData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,.1)', fill: true, tension: .2, spanGaps: true },
+    { label: 'Goal', data: labels.map(() => u.goal), borderColor: '#10b981', borderDash: [6, 6], pointRadius: 0 }] }, options: opt() });
+  mkChart('calChart', { type: 'bar', data: { labels, datasets: [
+    { type: 'bar', label: 'Eaten (kcal)', data: eaten, backgroundColor: eaten.map(c => c == null ? 'transparent' : c > target * 1.1 ? '#f87171' : '#60a5fa'), borderRadius: 4 },
+    { type: 'line', label: 'Target', data: labels.map(() => target), borderColor: '#10b981', borderDash: [6, 6], pointRadius: 0 }] }, options: opt() });
+  mkChart('macroChart', { type: 'bar', data: { labels, datasets: [
+    { label: 'Protein', data: P, backgroundColor: '#10b981' }, { label: 'Carbs', data: C, backgroundColor: '#3b82f6' }, { label: 'Fat', data: F, backgroundColor: '#f59e0b' }] },
+    options: opt({ x: { stacked: true }, y: { stacked: true } }) });
+}
+function exportCSV() {
+  const u = user(), rows = [['Date', 'Type', 'Meal', 'Name', 'Amount', 'Calories', 'Protein_g', 'Carbs_g', 'Fat_g']];
+  Object.keys(logs).filter(k => k.startsWith(u.id + '_')).sort().forEach(k => {
+    const l = logs[k];
+    l.foods.forEach(f => rows.push([l.date, 'Food', f.mealType, f.name, f.serving || '', f.calories, f.protein, f.carbs, f.fat]));
+    (l.exercises || []).forEach(e => rows.push([l.date, 'Exercise (kcal burned)', '', e.name, (e.duration || 0) + ' min', e.calories, '', '', '']));
+    if (l.water) rows.push([l.date, 'Water', '', '', l.water + ' ml', '', '', '', '']);
+    if (l.weight) rows.push([l.date, 'Weight', '', '', r1(u.units === 'imperial' ? l.weight / 0.453592 : l.weight) + (u.units === 'imperial' ? ' lbs' : ' kg'), '', '', '', '']);
+  });
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const blob = new Blob(['\ufeff' + rows.map(r => r.map(q).join(',')).join('\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `familyfit-${u.name}-${dateKey()}.csv`; a.click(); URL.revokeObjectURL(a.href);
+  alert('Exported the last year of data for ' + u.name + '.');
 }
 function saveWeight() {
   const v = Number($('log-weight-input').value); if (!v || v <= 0) return alert('Please enter a valid weight');
-  const u = user(), l = getLog(); l.weight = u.units === 'imperial' ? v * 0.453592 : v; u.weight = v;
+  const u = user(), l = getLog(dateKey()); l.weight = u.units === 'imperial' ? v * 0.453592 : v; u.weight = v;
   saveLog(l); saveProfiles(); $('log-weight-input').value = ''; renderAll();
 }
 
@@ -995,6 +1163,10 @@ function openProfileModal() {
   const adj = u.adjust ?? (u.goal < u.weight ? -400 : u.goal > u.weight ? 300 : 0);
   $('prof-pace').value = [...$('prof-pace').options].some(o => o.value === String(adj)) ? String(adj) : 'custom';
   $('prof-custom').value = adj; paceTouched = false; paceChanged();
+  const mp = u.macros || { c: 40, p: 30, f: 30 }, mk = `${mp.c},${mp.p},${mp.f}`;
+  $('prof-macros').value = [...$('prof-macros').options].some(o => o.value === mk) ? mk : 'custom';
+  $('mc-c').value = mp.c; $('mc-p').value = mp.p; $('mc-f').value = mp.f; macroChanged();
+  $('prof-water').value = u.waterGoal || 2500;
   $('del-prof').classList.toggle('hidden', S.users.length < 2);
   $('usda-key').value = usdaKey; $('auto-meal').checked = autoMealOn();
   setUnitLabels(); $('profile-modal').classList.remove('hidden');
@@ -1031,10 +1203,17 @@ function toggleUnitInputs() {   // converts the existing numbers when the unit s
   }
   setUnitLabels(); paceHint();
 }
+function macroValue() {
+  const v = $('prof-macros').value; if (v !== 'custom') { const [c, p, f] = v.split(',').map(Number); return { c, p, f }; }
+  return { c: num($('mc-c').value), p: num($('mc-p').value), f: num($('mc-f').value) };
+}
+function macroChanged() { $('mc-row').classList.toggle('hidden', $('prof-macros').value !== 'custom'); }
 function saveProfile(e) {
   e.preventDefault(); const u = user();
+  const mv = macroValue(); if (mv.c + mv.p + mv.f !== 100) return alert('The macro percentages must add up to 100.');
   Object.assign(u, { name: $('prof-name').value.trim(), units: $('prof-units').value, gender: $('prof-gender').value, age: Number($('prof-age').value),
     height: Number($('prof-height').value), weight: Number($('prof-weight').value), goal: Number($('prof-goal').value), activity: $('prof-activity').value });
+  u.macros = mv; u.waterGoal = num($('prof-water').value) || 2500;
   if (paceTouched) u.adjust = Math.max(-1500, Math.min(1000, paceValue()));
   saveProfiles(); closeProfileModal(); renderAll();
 }
@@ -1100,7 +1279,7 @@ function applyTheme(dark) {
   $('theme-btn').innerHTML = `<i class="fa-solid ${dark ? 'fa-sun' : 'fa-moon'} text-lg"></i>`;
   document.querySelector('meta[name="theme-color"]').content = dark ? '#0b1220' : '#3b82f6';
   if (window.Chart) { Chart.defaults.color = dark ? '#94a3b8' : '#666'; Chart.defaults.borderColor = dark ? '#243047' : 'rgba(0,0,0,0.1)'; }
-  if (chart) { chart.destroy(); chart = null; if (tab === 'progress') renderProgress(); }
+  Object.values(charts).forEach(c => c.destroy()); charts = {}; if (tab === 'progress') renderProgress();
 }
 function toggleTheme() {
   const dark = !document.documentElement.classList.contains('dark');
