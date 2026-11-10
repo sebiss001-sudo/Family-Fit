@@ -187,7 +187,7 @@ html.dark .sm.bg-slate-100,html.dark .sm.bg-slate-200{color:#e2e8f0}
         <select id="food-meal-type" class="inp"><option>Breakfast</option><option selected>Lunch</option><option>Dinner</option><option>Snacks</option></select></div>
       <div><label class="lbl">Item Name</label><input id="food-name" class="inp" placeholder="Oatmeal cooked"></div>
       <div class="grid grid-cols-2 gap-3">
-        <div><label class="lbl">Amount eaten (g/ml)</label><input type="number" min="0" id="food-grams" oninput="rescale('food')" class="inp" placeholder="100"></div>
+        <div><label class="lbl">Quantity</label><div class="flex gap-1"><input type="number" min="0" step="any" id="food-grams" oninput="rescale('food')" class="inp" placeholder="100"><select id="food-unit" onchange="unitChanged('food')" class="inp !w-24"></select></div></div>
         <div><label class="lbl">Calories (kcal)</label><input type="number" min="0" id="food-calories" class="inp" placeholder="250"></div>
       </div>
       <div class="grid grid-cols-3 gap-2">
@@ -195,7 +195,7 @@ html.dark .sm.bg-slate-100,html.dark .sm.bg-slate-200{color:#e2e8f0}
         <div><label class="lbl">Carbs (g)</label><input type="number" min="0" step="0.1" id="food-carbs" class="inp"></div>
         <div><label class="lbl">Fat (g)</label><input type="number" min="0" step="0.1" id="food-fat" class="inp"></div>
       </div>
-      <p class="text-[11px] text-slate-400">Picking an online food scales the values to the amount you eat.</p>
+      <p class="text-[11px] text-slate-400">Picking a food scales calories and macros to the quantity and unit you choose. ml, cup, tbsp and tsp assume water-like density.</p>
       <button onclick="logFoodItem()" class="btn bg-blue-600 hover:bg-blue-700">Add to Log</button>
       <button onclick="saveFoodFromForm()" class="btn bg-slate-600 hover:bg-slate-700"><i class="fa-solid fa-bookmark mr-1"></i>Save as My Food (reuse later)</button>
     </div>
@@ -215,7 +215,7 @@ html.dark .sm.bg-slate-100,html.dark .sm.bg-slate-200{color:#e2e8f0}
         <div class="flex gap-2"><input id="ing-name" oninput="searchIngredient()" autocomplete="off" placeholder="Search or type an ingredient" class="inp !text-xs"><button onclick="openRecipeScanner()" class="bg-slate-800 text-white px-3 rounded-lg text-xs" title="Scan"><i class="fa-solid fa-barcode"></i></button></div>
         <div id="ing-search-results" class="max-h-60 overflow-y-auto border rounded-lg hidden divide-y bg-white shadow-lg"></div>
         <div class="grid grid-cols-2 gap-2">
-          <input type="number" min="0" id="ing-grams" oninput="rescale('ing')" placeholder="Amount (g)" class="inp !text-xs">
+          <div class="flex gap-1"><input type="number" min="0" step="any" id="ing-grams" oninput="rescale('ing')" placeholder="Quantity" class="inp !text-xs"><select id="ing-unit" onchange="unitChanged('ing')" class="inp !text-xs !w-24"></select></div>
           <input type="number" min="0" id="ing-cals" placeholder="Calories for this amount" class="inp !text-xs"></div>
         <div class="grid grid-cols-3 gap-2">
           <input type="number" min="0" step="0.1" id="ing-protein" placeholder="Prot (g)" class="inp !text-xs">
@@ -328,7 +328,7 @@ html.dark .sm.bg-slate-100,html.dark .sm.bg-slate-200{color:#e2e8f0}
       <div><label class="lbl" id="label-goal">Goal (kg)</label><input type="number" min="1" step="0.1" id="prof-goal" oninput="paceHint()" required class="inp"></div></div>
     <div><label class="lbl">Activity Level</label><select id="prof-activity" class="inp"><option value="1.2">Sedentary</option><option value="1.375">Lightly Active</option><option value="1.55">Moderately Active</option><option value="1.725">Very Active</option></select></div>
     <div><label class="lbl">Weekly goal</label>
-      <select id="prof-pace" onchange="paceChanged()" class="inp">
+      <select id="prof-pace" onchange="paceTouched = true; paceChanged()" class="inp">
         <option value="0">Maintain my weight</option>
         <option value="-250">Lose ~0.25 kg (0.5 lb) per week: -250 kcal/day</option>
         <option value="-500">Lose ~0.5 kg (1 lb) per week: -500 kcal/day</option>
@@ -338,7 +338,7 @@ html.dark .sm.bg-slate-100,html.dark .sm.bg-slate-200{color:#e2e8f0}
         <option value="500">Gain ~0.5 kg (1 lb) per week: +500 kcal/day</option>
         <option value="custom">Custom (kcal per day)...</option>
       </select>
-      <input type="number" step="10" id="prof-custom" oninput="paceHint()" class="inp mt-2 hidden" placeholder="kcal per day, e.g. -300 (negative = lose weight)">
+      <input type="number" step="10" id="prof-custom" oninput="paceTouched = true; paceHint()" class="inp mt-2 hidden" placeholder="kcal per day, e.g. -300 (negative = lose weight)">
       <p id="pace-hint" class="text-[11px] text-slate-400 mt-1"></p></div>
     <div class="pt-2 flex justify-between items-center">
       <div class="space-x-3"><button type="button" onclick="createNewProfile()" class="text-xs text-blue-600 font-semibold">+ Add member</button>
@@ -351,6 +351,10 @@ html.dark .sm.bg-slate-100,html.dark .sm.bg-slate-200{color:#e2e8f0}
     <label class="lbl">USDA food-search key (faster search, shared by the family)</label>
     <div class="flex gap-2"><input id="usda-key" type="password" autocomplete="off" class="inp" placeholder="Paste your free key"><button onclick="saveUsdaKey()" class="sm bg-blue-600 text-white">Save</button></div>
     <p class="text-[11px] text-slate-400">Get one free at <a href="https://fdc.nal.usda.gov/api-key-signup" target="_blank" rel="noopener" class="text-blue-600 underline">fdc.nal.usda.gov/api-key-signup</a>. It is stored in your private family database, never in GitHub. Leave it empty and press Save to remove it.</p>
+  </div>
+  <div class="border-t pt-3 space-y-1">
+    <label class="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" id="auto-meal" onchange="setAutoMeal()" class="w-4 h-4">Pick the meal automatically by time of day</label>
+    <p class="text-[11px] text-slate-400">This device only. Breakfast 4:00-11:00, Lunch 11:00-15:00, Snack 15:00-17:00, Dinner 17:00-22:00, Snack otherwise. You can still change it by hand.</p>
   </div></div></div>
 
 <!-- EDIT RECIPE MODAL -->
@@ -495,7 +499,7 @@ $('desk-nav').innerHTML = TABS.map(t => `<button onclick="switchTab('${t[0]}')" 
 $('mob-nav').innerHTML = TABS.map(t => `<button onclick="switchTab('${t[0]}')" id="mob-tab-${t[0]}" class="flex-1 flex flex-col items-center justify-center space-y-1 py-2 transition"><i class="fa-solid fa-${t[1]} text-xl"></i><span class="text-[11px] font-medium">${t[3]}</span></button>`).join('');
 
 function switchTab(t) {
-  tab = t;
+  tab = t; applyAutoMeal();
   TABS.forEach(([id]) => {
     $('view-' + id).classList.toggle('hidden', id !== t);
     $('tab-' + id).classList.toggle('active-tab', id === t);
@@ -617,27 +621,59 @@ function logFoodItem() {
   const name = $('food-name').value.trim(), cal = $('food-calories').value;
   if (!name || cal === '') return alert('Please enter item name and calories');
   const g = $('food-grams').value, l = getLog();
-  l.foods.push({ mealType: $('food-meal-type').value, name, calories: num(cal), serving: g ? g + ' g' : '1 serving',
+  l.foods.push({ mealType: $('food-meal-type').value, name, calories: num(cal), serving: qtyLabel('food') || '1 serving',
     protein: num($('food-protein').value), carbs: num($('food-carbs').value), fat: num($('food-fat').value) });
   saveLog(l);
   ['name', 'grams', 'calories', 'protein', 'carbs', 'fat'].forEach(k => $('food-' + k).value = '');
-  bases.food = null; renderAll();
+  bases.food = null; setUnits('food', null); renderAll();
 }
 
 /* ---------- per-100g scaling (food form + ingredient form) ---------- */
-const FIELDS = { food: { g: 'food-grams', cal: 'food-calories', p: 'food-protein', c: 'food-carbs', f: 'food-fat', n: 'food-name' },
-                 ing: { g: 'ing-grams', cal: 'ing-cals', p: 'ing-protein', c: 'ing-carbs', f: 'ing-fat', n: 'ing-name' } };
+const FIELDS = { food: { g: 'food-grams', cal: 'food-calories', p: 'food-protein', c: 'food-carbs', f: 'food-fat', n: 'food-name', u: 'food-unit' },
+                 ing: { g: 'ing-grams', cal: 'ing-cals', p: 'ing-protein', c: 'ing-carbs', f: 'ing-fat', n: 'ing-name', u: 'ing-unit' } };
+const UNIT_F = { g: 1, ml: 1, oz: 28.35, cup: 240, tbsp: 15, tsp: 5 };   // grams (or ml) per unit
+function setUnits(k, b) {   // the unit list depends on the kind of food that was picked
+  const sel = $(FIELDS[k].u); let opts;
+  if (!b) opts = ['g', 'ml', 'oz', 'cup', 'tbsp', 'tsp'].map(u => [u, u, u]);
+  else if (b.unit === 'serving') opts = [['serving', b.label || 'serving', b.label || 'serving']];
+  else {
+    opts = [b.unit, b.unit === 'g' ? 'ml' : 'g', 'oz', 'cup', 'tbsp', 'tsp'].map(u => [u, u, u]);
+    if (b.servingAmt) opts.push(['serving', `serving (${b.servingAmt} ${b.unit})`, 'serving']);
+  }
+  sel.innerHTML = opts.map(([v, text, short]) => `<option value="${esc(v)}" data-short="${esc(short)}">${esc(text)}</option>`).join('');
+  sel.dataset.prev = sel.value;
+}
+const unitFactor = (k, u) => u === 'serving' ? (bases[k]?.servingAmt || 1) : (UNIT_F[u] || 1);
+function qtyLabel(k) {
+  const q = $(FIELDS[k].g).value, o = $(FIELDS[k].u).selectedOptions[0];
+  return q === '' ? '' : `${q} ${o ? o.dataset.short : ''}`.trim();
+}
 function rescale(k) {
-  const b = bases[k], F = FIELDS[k], g = num($(F.g).value);
-  if (!b) return;
-  $(F.cal).value = Math.round(b.cal * g / 100); $(F.p).value = r1(b.p * g / 100); $(F.c).value = r1(b.c * g / 100); $(F.f).value = r1(b.f * g / 100);
+  const b = bases[k], F = FIELDS[k], q = $(F.g).value;
+  if (!b || q === '') return;       // box emptied while typing: leave the numbers alone
+  const sc = Number(q) * unitFactor(k, $(F.u).value) / b.per;
+  $(F.cal).value = Math.round(b.cal * sc); $(F.p).value = r1(b.p * sc); $(F.c).value = r1(b.c * sc); $(F.f).value = r1(b.f * sc);
+}
+function unitChanged(k) {   // keeps the same real amount (100 g becomes 3.53 oz) so the calories don't jump
+  const F = FIELDS[k], sel = $(F.u), q = $(F.g).value, prev = sel.dataset.prev || sel.value;
+  if (q !== '' && bases[k]) $(F.g).value = Math.round(Number(q) * unitFactor(k, prev) / unitFactor(k, sel.value) * 100) / 100;
+  sel.dataset.prev = sel.value; rescale(k);
+}
+function fillBase(k, name, b, qty) {
+  const F = FIELDS[k]; bases[k] = b; setUnits(k, b);
+  $(F.n).value = name; $(F.u).value = b.unit; $(F.u).dataset.prev = b.unit;
+  $(F.g).value = qty ?? b.per; rescale(k);
+}
+function servingBase(r) {   // recipes and custom foods: the numbers are per serving, or per the custom food's own amount
+  const n = x => Number(x) || 0, base = { cal: n(r.calories), p: n(r.protein), c: n(r.carbs), f: n(r.fat) };
+  const gm = /^\s*([\d.]+)\s*(g|ml)\s*$/i.exec(r.serving || '');
+  if (gm) return { ...base, per: Number(gm[1]) || 100, unit: gm[2].toLowerCase() };
+  const lm = /^\s*([\d.]+)\s+(.+)$/.exec(r.serving || '');
+  return { ...base, per: lm ? Number(lm[1]) || 1 : 1, unit: 'serving', label: lm ? lm[2] : (r.serving || 'serving') };
 }
 function fillProduct(k, p) {
-  const F = FIELDS[k]; bases[k] = p;
-  $(F.n).value = p.name;
-  const m = /([\d.]+)\s*(g|ml)/i.exec(p.serving || '');
-  $(F.g).value = m ? m[1] : 100;
-  rescale(k);
+  const m = /([\d.]+)\s*(g|ml)\b/i.exec(p.serving || ''), unit = m && m[2].toLowerCase() === 'ml' ? 'ml' : 'g';
+  fillBase(k, p.name, { ...p, per: 100, unit, servingAmt: m ? Number(m[1]) : null }, m ? Number(m[1]) : 100);
   if (p.missing) alert('This product has no nutrition data in the database (it would show 0 kcal). Please enter the values yourself.');
 }
 function normProduct(p) {
@@ -704,7 +740,7 @@ function searchFood() {
   clearTimeout(searchTimer);
   if (!q) return box.classList.add('hidden');
   const seq = ++searchSeq;
-  const recipes = [...S.recipes, ...(S.customFoods || []).map(f => ({ title: f.name, calories: f.calories, protein: f.protein, carbs: f.carbs, fat: f.fat }))].filter(r => r.title.toLowerCase().includes(q));
+  const recipes = [...S.recipes, ...(S.customFoods || []).map(f => ({ title: f.name, calories: f.calories, protein: f.protein, carbs: f.carbs, fat: f.fat, serving: f.serving }))].filter(r => r.title.toLowerCase().includes(q));
   searchItems = recipes.map(r => ({ recipe: r }));
   const draw = online => {
     let h = '', i = 0;
@@ -728,11 +764,7 @@ function searchFood() {
 function pickSearch(i) {
   const it = searchItems[i];
   if (it.product) fillProduct('food', it.product);
-  else {
-    const r = it.recipe; bases.food = null;
-    $('food-name').value = r.title; $('food-grams').value = ''; $('food-calories').value = r.calories;
-    $('food-protein').value = r.protein || 0; $('food-carbs').value = r.carbs || 0; $('food-fat').value = r.fat || 0;
-  }
+  else fillBase('food', it.recipe.title, servingBase(it.recipe));
   $('food-search-results').classList.add('hidden'); $('food-search').value = '';
 }
 
@@ -745,7 +777,7 @@ function calcRecipe() {
 let ingItems = [], ingSeq = 0, ingTimer = null;
 function searchIngredient() {
   const q = $('ing-name').value.trim(), box = $('ing-search-results');
-  clearTimeout(ingTimer); bases.ing = null;           // typing by hand switches off per-100 g scaling
+  clearTimeout(ingTimer); bases.ing = null; setUnits('ing', null);           // typing by hand switches off per-100 g scaling
   if (q.length < 2) return box.classList.add('hidden');
   const seq = ++ingSeq;
   box.innerHTML = '<div class="p-3 text-xs text-slate-400">Searching... (the food database can take a few seconds)</div>'; box.classList.remove('hidden');
@@ -764,8 +796,8 @@ function addIngredient() {
   const name = $('ing-name').value.trim();
   if (!name) return alert('Please enter an ingredient name');
   const g = $('ing-grams').value;
-  ingredients.push({ name, serving: g ? g + ' g' : '1 portion', calories: num($('ing-cals').value), protein: num($('ing-protein').value), carbs: num($('ing-carbs').value), fat: num($('ing-fat').value) });
-  Object.values(FIELDS.ing).forEach(id => $(id).value = ''); bases.ing = null; $('ing-search-results').classList.add('hidden');
+  ingredients.push({ name, serving: qtyLabel('ing') || '1 portion', calories: num($('ing-cals').value), protein: num($('ing-protein').value), carbs: num($('ing-carbs').value), fat: num($('ing-fat').value) });
+  ['n', 'g', 'cal', 'p', 'c', 'f'].forEach(x => $(FIELDS.ing[x]).value = ''); bases.ing = null; setUnits('ing', null); $('ing-search-results').classList.add('hidden');
   renderIngredients(); calcRecipe();
 }
 function renderIngredients() {
@@ -816,7 +848,7 @@ function saveCustomFood() {
 function saveFoodFromForm() {   // from the Food Log form
   const name = $('food-name').value.trim(), cal = $('food-calories').value, g = $('food-grams').value;
   if (!name || cal === '') return alert('Enter a name and calories first.');
-  S.customFoods.push({ name, serving: g ? g + ' g' : '1 serving', calories: num(cal), protein: num($('food-protein').value), carbs: num($('food-carbs').value), fat: num($('food-fat').value) });
+  S.customFoods.push({ name, serving: qtyLabel('food') || '1 serving', calories: num(cal), protein: num($('food-protein').value), carbs: num($('food-carbs').value), fat: num($('food-fat').value) });
   saveProfiles(); alert('Saved to My Foods. Search for it any time.');
 }
 function renderCustomFoods() {
@@ -962,11 +994,12 @@ function openProfileModal() {
   Object.keys(CONV).forEach(id => { delete $(id).dataset.metric; delete $(id).dataset.shown; });
   const adj = u.adjust ?? (u.goal < u.weight ? -400 : u.goal > u.weight ? 300 : 0);
   $('prof-pace').value = [...$('prof-pace').options].some(o => o.value === String(adj)) ? String(adj) : 'custom';
-  $('prof-custom').value = adj; paceChanged();
+  $('prof-custom').value = adj; paceTouched = false; paceChanged();
   $('del-prof').classList.toggle('hidden', S.users.length < 2);
-  $('usda-key').value = usdaKey;
+  $('usda-key').value = usdaKey; $('auto-meal').checked = autoMealOn();
   setUnitLabels(); $('profile-modal').classList.remove('hidden');
 }
+let paceTouched = false;   // the weekly goal is only saved if you actually change it
 const paceValue = () => $('prof-pace').value === 'custom' ? Number($('prof-custom').value) || 0 : Number($('prof-pace').value);
 function paceChanged() { $('prof-custom').classList.toggle('hidden', $('prof-pace').value !== 'custom'); paceHint(); }
 function paceHint() {   // 1 kg of body fat is roughly 7,700 kcal (3,500 kcal per lb)
@@ -1001,7 +1034,8 @@ function toggleUnitInputs() {   // converts the existing numbers when the unit s
 function saveProfile(e) {
   e.preventDefault(); const u = user();
   Object.assign(u, { name: $('prof-name').value.trim(), units: $('prof-units').value, gender: $('prof-gender').value, age: Number($('prof-age').value),
-    height: Number($('prof-height').value), weight: Number($('prof-weight').value), goal: Number($('prof-goal').value), activity: $('prof-activity').value, adjust: Math.max(-1500, Math.min(1000, paceValue())) });
+    height: Number($('prof-height').value), weight: Number($('prof-weight').value), goal: Number($('prof-goal').value), activity: $('prof-activity').value });
+  if (paceTouched) u.adjust = Math.max(-1500, Math.min(1000, paceValue()));
   saveProfiles(); closeProfileModal(); renderAll();
 }
 function createNewProfile() {
@@ -1049,6 +1083,16 @@ async function importBackup(e) {
     alert('Backup imported.'); closeProfileModal();
   } catch (err) { alert('Import failed: ' + err.message); } finally { input.value = ''; }
 }
+
+/* ---------- meal by time of day ---------- */
+const autoMealOn = () => { try { return localStorage.getItem('ff_automeal') !== '0'; } catch (e) { return true; } };
+function mealForNow(d = new Date()) {
+  const h = d.getHours();
+  return h >= 4 && h < 11 ? 'Breakfast' : h >= 11 && h < 15 ? 'Lunch' : h >= 17 && h < 22 ? 'Dinner' : 'Snacks';
+}
+function applyAutoMeal() { if (autoMealOn()) ['food-meal-type', 'recipe-meal', 'scan-meal'].forEach(id => $(id).value = mealForNow()); }
+function setAutoMeal() { try { localStorage.setItem('ff_automeal', $('auto-meal').checked ? '1' : '0'); } catch (e) {} applyAutoMeal(); }
+setUnits('food', null); setUnits('ing', null);
 
 /* ---------- theme ---------- */
 function applyTheme(dark) {
